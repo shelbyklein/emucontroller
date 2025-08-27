@@ -12,6 +12,7 @@ class EmuController {
         this.ctx = null;
         this.zoomLevel = 1;
         this.currentOrientation = 'portrait';
+        this.buttons = []; // Store parsed button data
         this.init();
     }
 
@@ -275,6 +276,8 @@ class EmuController {
                 }
 
                 this.currentSkin = skinData;
+                
+                
                 const skinName = skinData.name || file.name.replace('.json', '');
                 this.showEditorScreen(skinName);
             } catch (error) {
@@ -315,14 +318,17 @@ class EmuController {
         // Update page title
         document.title = `EmuController - ${skinName}`;
         
-        // Update JSON viewer and load from localStorage if available
-        this.loadFromLocalStorage();
+        // Update JSON viewer
         this.updateJsonViewer();
+        
+        // Parse button data from skin
+        this.parseButtons();
         
         // Initialize canvas
         this.initializeCanvas();
         
         console.log('Current skin data:', this.currentSkin);
+        console.log('Parsed buttons:', this.buttons);
     }
 
     initializeCanvas() {
@@ -391,6 +397,9 @@ class EmuController {
         
         // Draw screen content area if defined
         this.drawScreenAreas();
+        
+        // Draw buttons
+        this.drawButtons();
         
         console.log('Canvas setup complete');
     }
@@ -494,6 +503,114 @@ class EmuController {
         this.ctx.fillText(`Mapping Size: ${width} × ${height}`, 12, 25);
     }
 
+    parseButtons() {
+        this.buttons = [];
+        
+        if (!this.currentSkin) return;
+        
+        const orientation = this.currentOrientation;
+        const orientationData = this.currentSkin.representations?.iphone?.edgeToEdge?.[orientation];
+        
+        if (!orientationData || !orientationData.items) return;
+        
+        // Parse items into button objects
+        orientationData.items.forEach((item, index) => {
+            const button = {
+                id: `button_${index}`,
+                frame: item.frame,
+                inputs: item.inputs,
+                extendedEdges: item.extendedEdges || { top: 0, bottom: 0, left: 0, right: 0 },
+                type: 'button'
+            };
+            
+            this.buttons.push(button);
+        });
+        
+        console.log(`Parsed ${this.buttons.length} buttons for ${orientation} orientation`);
+    }
+
+
+    drawButtons() {
+        if (!this.ctx || !this.buttons) return;
+        
+        console.log('Drawing', this.buttons.length, 'buttons');
+        
+        this.buttons.forEach((button) => {
+            if (!button.frame) return;
+            
+            const { x, y, width, height } = button.frame;
+            const { type } = button;
+            
+            // Set button styling based on type
+            this.setButtonStyle(type);
+            
+            // Draw button background
+            this.ctx.fillRect(x, y, width, height);
+            
+            // Draw button border
+            this.ctx.strokeRect(x, y, width, height);
+            
+            // Draw button label
+            this.drawButtonLabel(button, x, y, width, height);
+        });
+    }
+
+    setButtonStyle(type) {
+        switch (type) {
+            case 'dpad':
+                this.ctx.fillStyle = 'rgba(100, 100, 100, 0.7)';
+                this.ctx.strokeStyle = '#666666';
+                break;
+            case 'action':
+                this.ctx.fillStyle = 'rgba(74, 158, 255, 0.7)';
+                this.ctx.strokeStyle = '#4a9eff';
+                break;
+            case 'shoulder':
+                this.ctx.fillStyle = 'rgba(139, 92, 246, 0.7)';
+                this.ctx.strokeStyle = '#8b5cf6';
+                break;
+            case 'system':
+                this.ctx.fillStyle = 'rgba(34, 197, 94, 0.7)';
+                this.ctx.strokeStyle = '#22c55e';
+                break;
+            case 'utility':
+                this.ctx.fillStyle = 'rgba(251, 191, 36, 0.7)';
+                this.ctx.strokeStyle = '#fbbf24';
+                break;
+            default:
+                this.ctx.fillStyle = 'rgba(156, 163, 175, 0.7)';
+                this.ctx.strokeStyle = '#9ca3af';
+                break;
+        }
+        
+        this.ctx.lineWidth = 2;
+    }
+
+    drawButtonLabel(button, x, y, width, height) {
+        const { inputs, type } = button;
+        let label = '';
+        
+        // Determine label text
+        if (type === 'dpad') {
+            label = 'D-PAD';
+        } else if (Array.isArray(inputs)) {
+            label = inputs[0].toUpperCase();
+        } else if (typeof inputs === 'object') {
+            label = Object.keys(inputs).join('/').toUpperCase();
+        }
+        
+        if (!label) return;
+        
+        // Set text styling
+        this.ctx.fillStyle = '#ffffff';
+        this.ctx.font = 'bold 12px system-ui';
+        this.ctx.textAlign = 'center';
+        this.ctx.textBaseline = 'middle';
+        
+        // Draw text
+        this.ctx.fillText(label, x + width/2, y + height/2);
+    }
+
     updateCanvasInfo() {
         const dimensionsEl = document.getElementById('canvasDimensions');
         const zoomEl = document.getElementById('zoomLevel');
@@ -545,6 +662,9 @@ class EmuController {
         // Update toggle button states
         document.getElementById('portraitBtn').classList.toggle('active', orientation === 'portrait');
         document.getElementById('landscapeBtn').classList.toggle('active', orientation === 'landscape');
+        
+        // Parse buttons for new orientation
+        this.parseButtons();
         
         // Update canvas size and redraw
         this.updateCanvasSize();
@@ -674,8 +794,12 @@ class EmuController {
             // Update current skin
             this.currentSkin = parsedJson;
             
-            // Save to localStorage
-            this.saveToLocalStorage();
+            
+            // Re-parse buttons from updated JSON
+            this.parseButtons();
+            
+            // Update canvas with new data
+            this.setupCanvas();
             
             // Exit edit mode
             this.cancelJsonEdit();
@@ -691,33 +815,6 @@ class EmuController {
         }
     }
 
-    saveToLocalStorage() {
-        try {
-            const skinKey = `emucontroller_skin_${this.currentSkin.identifier}`;
-            localStorage.setItem(skinKey, JSON.stringify(this.currentSkin));
-            localStorage.setItem('emucontroller_current_skin', skinKey);
-        } catch (error) {
-            console.error('Failed to save to localStorage:', error);
-        }
-    }
-
-    loadFromLocalStorage() {
-        try {
-            const currentSkinKey = localStorage.getItem('emucontroller_current_skin');
-            if (currentSkinKey) {
-                const savedSkin = localStorage.getItem(currentSkinKey);
-                if (savedSkin) {
-                    const parsedSkin = JSON.parse(savedSkin);
-                    // Only load if it matches the current skin identifier
-                    if (parsedSkin.identifier === this.currentSkin.identifier) {
-                        this.currentSkin = parsedSkin;
-                    }
-                }
-            }
-        } catch (error) {
-            console.error('Failed to load from localStorage:', error);
-        }
-    }
 
     showSaveConfirmation() {
         const saveBtn = document.getElementById('saveJsonBtn');
@@ -809,6 +906,8 @@ class EmuController {
             }
 
             this.currentSkin = templateData;
+            
+            
             this.hideTemplateModal();
             this.showEditorScreen(templateData.name);
 
