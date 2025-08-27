@@ -21,6 +21,22 @@
             "right": 0
           },
           "menuInsets": {}
+        },
+        "landscape": {
+          "assets": {},
+          "items": [],
+          "screens": [],
+          "mappingSize": {
+            "width": 0,
+            "height": 0
+          },
+          "extendedEdges": { 
+            "top": 0,
+            "bottom": 0,
+            "left": 0,
+            "right": 0
+          },
+          "menuInsets": {}
         }
       }
     }

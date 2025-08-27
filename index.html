@@ -27,6 +27,18 @@
                     <p>Start from scratch with a blank configuration</p>
                 </button>
                 
+                <button class="option-btn template-btn" id="templateBtn">
+                    <div class="option-icon">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                            <rect x="7" y="7" width="3" height="9"/>
+                            <rect x="14" y="7" width="3" height="5"/>
+                        </svg>
+                    </div>
+                    <h3>Start from Template</h3>
+                    <p>Begin with a pre-configured skin template</p>
+                </button>
+                
                 <button class="option-btn import-btn" id="importBtn">
                     <div class="option-icon">
                         <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -41,6 +53,26 @@
             </div>
             
             <input type="file" id="fileInput" accept=".json" style="display: none;">
+        </div>
+
+        <!-- Template Selection Modal -->
+        <div class="modal-overlay" id="templateModal" style="display: none;">
+            <div class="modal">
+                <div class="modal-header">
+                    <h3>Choose Template</h3>
+                    <button class="close-btn" id="closeTemplateModal">&times;</button>
+                </div>
+                
+                <div class="modal-body">
+                    <div class="template-grid" id="templateGrid">
+                        <!-- Template options will be populated by JavaScript -->
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" id="cancelTemplateModal">Cancel</button>
+                </div>
+            </div>
         </div>
 
         <!-- New Skin Modal -->
@@ -86,13 +118,98 @@
         </div>
         
         <div class="editor-screen" id="editorScreen" style="display: none;">
-            <!-- Editor interface will go here -->
             <div class="editor-header">
                 <button class="back-btn" id="backBtn">← Back to Home</button>
                 <h2 id="skinTitle">Untitled Skin</h2>
+                <div class="editor-actions">
+                    <button class="btn btn-secondary" id="exportBtn">Export JSON</button>
+                </div>
             </div>
-            <div class="editor-content">
-                <p>Editor interface coming soon...</p>
+            
+            <div class="editor-layout">
+                <div class="editor-main">
+                    <div class="canvas-panel">
+                        <div class="canvas-header">
+                            <div class="canvas-info">
+                                <span class="canvas-title">iPhone Screen</span>
+                                <span class="canvas-dimensions" id="canvasDimensions">0 × 0</span>
+                            </div>
+                            <div class="canvas-controls">
+                                <div class="orientation-toggle">
+                                    <button class="btn-toggle active" id="portraitBtn" title="Portrait">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <rect x="6" y="2" width="12" height="20" rx="2" ry="2"></rect>
+                                            <line x1="12" y1="18" x2="12.01" y2="18"></line>
+                                        </svg>
+                                    </button>
+                                    <button class="btn-toggle" id="landscapeBtn" title="Landscape">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <rect x="2" y="6" width="20" height="12" rx="2" ry="2"></rect>
+                                            <line x1="6" y1="12" x2="6.01" y2="12"></line>
+                                        </svg>
+                                    </button>
+                                </div>
+                                <div class="canvas-zoom-controls">
+                                    <button class="btn-icon" id="zoomOutBtn" title="Zoom Out">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <circle cx="11" cy="11" r="8"></circle>
+                                            <path d="M21 21l-4.35-4.35"></path>
+                                            <line x1="8" y1="11" x2="14" y2="11"></line>
+                                        </svg>
+                                    </button>
+                                    <span class="zoom-level" id="zoomLevel">100%</span>
+                                    <button class="btn-icon" id="zoomInBtn" title="Zoom In">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <circle cx="11" cy="11" r="8"></circle>
+                                            <path d="M21 21l-4.35-4.35"></path>
+                                            <line x1="11" y1="8" x2="11" y2="14"></line>
+                                            <line x1="8" y1="11" x2="14" y2="11"></line>
+                                        </svg>
+                                    </button>
+                                    <button class="btn-icon" id="fitCanvasBtn" title="Reset Zoom (100%)">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="canvas-container">
+                            <div class="canvas-viewport" id="canvasViewport">
+                                <canvas id="skinCanvas" class="skin-canvas"></canvas>
+                                <div class="canvas-overlay" id="canvasOverlay"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="json-panel">
+                    <div class="json-panel-header">
+                        <h3>JSON Configuration</h3>
+                        <div class="json-actions">
+                            <button class="btn-icon" id="editJsonBtn" title="Edit JSON">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                </svg>
+                            </button>
+                            <button class="btn-icon" id="copyJsonBtn" title="Copy JSON">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="json-content">
+                        <pre id="jsonViewer" class="json-viewer"><code>{}</code></pre>
+                        <textarea id="jsonEditor" class="json-editor" style="display: none;"></textarea>
+                    </div>
+                    <div class="json-edit-actions" id="jsonEditActions" style="display: none;">
+                        <button class="btn btn-secondary" id="cancelEditBtn">Cancel</button>
+                        <button class="btn btn-primary" id="saveJsonBtn">Save Changes</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
