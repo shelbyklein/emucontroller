@@ -104,6 +104,17 @@ class EmuController {
         saveJsonBtn.addEventListener('click', () => this.saveJsonChanges());
         cancelEditBtn.addEventListener('click', () => this.cancelJsonEdit());
         
+        // Button management events
+        const addButtonBtn = document.getElementById('addButtonBtn');
+        const toggleButtonPanel = document.getElementById('toggleButtonPanel');
+        
+        addButtonBtn.addEventListener('click', () => this.showAddButtonDialog());
+        toggleButtonPanel.addEventListener('click', () => this.toggleButtonPanel());
+        
+        // Device size selector events
+        const deviceSizeSelect = document.getElementById('deviceSizeSelect');
+        deviceSizeSelect.addEventListener('change', (e) => this.onDeviceSizeChange(e));
+        
         // Visual control events
         visualPortraitBtn.addEventListener('click', () => this.setOrientation('portrait'));
         visualLandscapeBtn.addEventListener('click', () => this.setOrientation('landscape'));
@@ -326,6 +337,12 @@ class EmuController {
         
         // Initialize visual renderer
         this.initializeVisualRenderer();
+        
+        // Initialize button panel
+        this.initializeButtonPanel();
+        
+        // Initialize device size selector
+        this.initializeDeviceSelector();
         
         console.log('Current skin data:', this.currentSkin);
     }
@@ -693,6 +710,12 @@ class EmuController {
             
             // Update device info
             this.updateDeviceInfo();
+            
+            // Update button panel
+            this.updateButtonPanel();
+            
+            // Update device selector
+            this.updateDeviceSelectorFromSkin();
         }
     }
     
@@ -771,6 +794,351 @@ class EmuController {
                 this.updateDeviceInfo();
             }
         }, 250);
+    }
+    
+    // Button Panel Management
+    async initializeButtonPanel() {
+        await this.loadAvailableButtons();
+        this.updateButtonPanel();
+    }
+    
+    async loadAvailableButtons() {
+        try {
+            const response = await fetch('./assets/available_buttons.json');
+            this.availableButtonsData = await response.json();
+        } catch (error) {
+            console.error('Failed to load available buttons:', error);
+            this.availableButtonsData = {};
+        }
+    }
+    
+    updateButtonPanel() {
+        if (!this.currentSkin) return;
+        
+        // Get console type from gameTypeIdentifier
+        const consoleType = this.getConsoleTypeFromIdentifier();
+        const availableButtons = this.availableButtonsData[consoleType] || [];
+        
+        this.populateAvailableButtons(availableButtons);
+        this.populateCurrentButtons();
+    }
+    
+    getConsoleTypeFromIdentifier() {
+        if (!this.currentSkin?.gameTypeIdentifier) return 'gba';
+        
+        const identifier = this.currentSkin.gameTypeIdentifier;
+        
+        // Extract console type from identifier (e.g., "com.rileytestut.delta.game.gba" -> "gba")
+        const parts = identifier.split('.');
+        return parts[parts.length - 1] || 'gba';
+    }
+    
+    populateAvailableButtons(availableButtons) {
+        const grid = document.getElementById('availableButtonsGrid');
+        if (!grid) return;
+        
+        grid.innerHTML = '';
+        
+        availableButtons.forEach(buttonType => {
+            const buttonEl = document.createElement('div');
+            buttonEl.className = 'available-button';
+            buttonEl.textContent = buttonType;
+            buttonEl.dataset.buttonType = buttonType;
+            
+            // Check if button already exists
+            if (this.isButtonInUse(buttonType)) {
+                buttonEl.classList.add('disabled');
+            } else {
+                buttonEl.addEventListener('click', () => this.addButton(buttonType));
+            }
+            
+            grid.appendChild(buttonEl);
+        });
+    }
+    
+    populateCurrentButtons() {
+        const list = document.getElementById('currentButtonsList');
+        if (!list) return;
+        
+        list.innerHTML = '';
+        
+        const items = this.visualRenderer?.getItemsForOrientation() || [];
+        items.forEach((item, index) => {
+            const itemEl = this.createCurrentButtonItem(item, index);
+            list.appendChild(itemEl);
+        });
+    }
+    
+    createCurrentButtonItem(item, index) {
+        const itemEl = document.createElement('div');
+        itemEl.className = 'current-button-item';
+        itemEl.dataset.buttonIndex = index;
+        
+        const infoEl = document.createElement('div');
+        infoEl.className = 'current-button-info';
+        
+        const nameEl = document.createElement('div');
+        nameEl.className = 'current-button-name';
+        nameEl.textContent = this.getButtonDisplayName(item.inputs);
+        
+        const coordsEl = document.createElement('div');
+        coordsEl.className = 'current-button-coords';
+        if (item.frame) {
+            coordsEl.textContent = `(${item.frame.x}, ${item.frame.y}) ${item.frame.width}×${item.frame.height}`;
+        }
+        
+        infoEl.appendChild(nameEl);
+        infoEl.appendChild(coordsEl);
+        
+        const actionsEl = document.createElement('div');
+        actionsEl.className = 'current-button-actions';
+        
+        const removeBtn = document.createElement('button');
+        removeBtn.className = 'btn-small';
+        removeBtn.textContent = 'Remove';
+        removeBtn.addEventListener('click', () => this.removeButton(index));
+        
+        actionsEl.appendChild(removeBtn);
+        
+        itemEl.appendChild(infoEl);
+        itemEl.appendChild(actionsEl);
+        
+        return itemEl;
+    }
+    
+    getButtonDisplayName(inputs) {
+        if (!inputs) return 'Unknown';
+        
+        if (typeof inputs === 'object' && !Array.isArray(inputs)) {
+            // D-pad style input
+            return 'D-PAD';
+        }
+        
+        if (Array.isArray(inputs)) {
+            return inputs[0].toUpperCase();
+        }
+        
+        return 'Button';
+    }
+    
+    isButtonInUse(buttonType) {
+        if (!this.visualRenderer) return false;
+        
+        const items = this.visualRenderer.getItemsForOrientation() || [];
+        return items.some(item => {
+            if (!item.inputs) return false;
+            
+            if (Array.isArray(item.inputs)) {
+                return item.inputs.includes(buttonType);
+            }
+            
+            if (typeof item.inputs === 'object') {
+                return Object.values(item.inputs).includes(buttonType);
+            }
+            
+            return false;
+        });
+    }
+    
+    addButton(buttonType) {
+        // Create new button item with default position and size
+        const newButton = {
+            inputs: [buttonType],
+            frame: {
+                x: 50,
+                y: 50,
+                width: 60,
+                height: 60
+            },
+            extendedEdges: {
+                top: 0,
+                bottom: 0,
+                left: 0,
+                right: 0
+            }
+        };
+        
+        // Special handling for d-pad
+        if (buttonType === 'dpad') {
+            newButton.inputs = {
+                up: 'up',
+                down: 'down',
+                left: 'left',
+                right: 'right'
+            };
+            newButton.frame.width = 120;
+            newButton.frame.height = 120;
+        }
+        
+        // Add to current skin data
+        const orientationData = this.currentSkin.representations?.iphone?.edgeToEdge?.[this.visualRenderer.currentOrientation];
+        if (orientationData && orientationData.items) {
+            orientationData.items.push(newButton);
+            
+            // Refresh visual and panels
+            this.visualRenderer.render();
+            this.updateJsonViewer();
+            this.updateButtonPanel();
+        }
+    }
+    
+    removeButton(index) {
+        const orientationData = this.currentSkin.representations?.iphone?.edgeToEdge?.[this.visualRenderer.currentOrientation];
+        if (orientationData && orientationData.items) {
+            orientationData.items.splice(index, 1);
+            
+            // Refresh visual and panels
+            this.visualRenderer.render();
+            this.updateJsonViewer();
+            this.updateButtonPanel();
+        }
+    }
+    
+    toggleButtonPanel() {
+        const buttonPanel = document.querySelector('.button-panel');
+        const toggleBtn = document.getElementById('toggleButtonPanel');
+        
+        buttonPanel.classList.toggle('collapsed');
+        
+        // Rotate toggle icon (left-pointing arrow when collapsed)
+        if (buttonPanel.classList.contains('collapsed')) {
+            toggleBtn.style.transform = 'rotate(180deg)';
+        } else {
+            toggleBtn.style.transform = '';
+        }
+    }
+    
+    showAddButtonDialog() {
+        // For now, just show available buttons - could be expanded to a modal
+        const buttonPanel = document.querySelector('.button-panel');
+        if (buttonPanel.classList.contains('collapsed')) {
+            this.toggleButtonPanel();
+        }
+    }
+    
+    // Device Size Management
+    async initializeDeviceSelector() {
+        await this.loadiPhoneSizes();
+        this.populateDeviceSelector();
+        this.updateDeviceSelectorFromSkin();
+    }
+    
+    async loadiPhoneSizes() {
+        try {
+            const response = await fetch('./assets/iphone-sizes.json');
+            this.iPhoneSizes = await response.json();
+        } catch (error) {
+            console.error('Failed to load iPhone sizes:', error);
+            this.iPhoneSizes = [];
+        }
+    }
+    
+    populateDeviceSelector() {
+        const select = document.getElementById('deviceSizeSelect');
+        if (!select || !this.iPhoneSizes) return;
+        
+        // Clear existing options except the first one
+        const firstOption = select.querySelector('option[value=""]');
+        select.innerHTML = '';
+        if (firstOption) select.appendChild(firstOption);
+        
+        // Add iPhone size options
+        this.iPhoneSizes.forEach((iphone, index) => {
+            const option = document.createElement('option');
+            option.value = index;
+            option.textContent = `${iphone.model} (${iphone.logicalWidth}×${iphone.logicalHeight})`;
+            option.dataset.width = iphone.logicalWidth;
+            option.dataset.height = iphone.logicalHeight;
+            option.dataset.model = iphone.model;
+            select.appendChild(option);
+        });
+    }
+    
+    updateDeviceSelectorFromSkin() {
+        if (!this.currentSkin || !this.visualRenderer) return;
+        
+        const mappingSize = this.visualRenderer.getMappingSize();
+        const select = document.getElementById('deviceSizeSelect');
+        
+        // Try to find matching iPhone size
+        const matchingIndex = this.iPhoneSizes.findIndex(iphone => 
+            iphone.logicalWidth === mappingSize.width && 
+            iphone.logicalHeight === mappingSize.height
+        );
+        
+        if (matchingIndex !== -1) {
+            select.value = matchingIndex;
+        } else {
+            select.value = '';
+        }
+    }
+    
+    onDeviceSizeChange(event) {
+        const select = event.target;
+        const selectedIndex = parseInt(select.value);
+        
+        if (isNaN(selectedIndex) || !this.iPhoneSizes[selectedIndex]) return;
+        
+        const selectedDevice = this.iPhoneSizes[selectedIndex];
+        this.updateMappingSize(selectedDevice.logicalWidth, selectedDevice.logicalHeight, selectedDevice.model);
+    }
+    
+    updateMappingSize(width, height, model) {
+        if (!this.currentSkin || !this.visualRenderer) return;
+        
+        // Update mapping size for both orientations
+        const portraitData = this.currentSkin.representations?.iphone?.edgeToEdge?.portrait;
+        const landscapeData = this.currentSkin.representations?.iphone?.edgeToEdge?.landscape;
+        
+        if (portraitData) {
+            portraitData.mappingSize = {
+                width: width,
+                height: height
+            };
+        }
+        
+        if (landscapeData) {
+            landscapeData.mappingSize = {
+                width: height, // Swapped for landscape
+                height: width
+            };
+        }
+        
+        // Refresh visual representation
+        this.visualRenderer.render();
+        this.updateDeviceInfo();
+        this.updateJsonViewer();
+        
+        // Show feedback
+        this.showMappingSizeFeedback(width, height, model);
+    }
+    
+    showMappingSizeFeedback(width, height, model) {
+        // Create temporary feedback element
+        const feedback = document.createElement('div');
+        feedback.className = 'drag-feedback';
+        feedback.textContent = `Mapping size updated to ${model} (${width}×${height})`;
+        feedback.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--accent);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 12px;
+            z-index: 10000;
+            animation: fadeInOut 3s ease-in-out forwards;
+        `;
+        
+        document.body.appendChild(feedback);
+        
+        // Remove after animation
+        setTimeout(() => {
+            if (feedback.parentNode) {
+                feedback.parentNode.removeChild(feedback);
+            }
+        }, 3000);
     }
     
     updateDeviceInfo() {
