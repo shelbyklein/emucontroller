@@ -8,6 +8,12 @@ class EmuController {
         this.selectedConsole = null;
         this.isEditMode = false;
         this.originalJsonContent = '';
+        
+        // Visual representation properties
+        this.visualRenderer = null;
+        this.currentOrientation = 'portrait';
+        this.zoomLevel = 1;
+        
         this.init();
     }
 
@@ -54,6 +60,13 @@ class EmuController {
         const editJsonBtn = document.getElementById('editJsonBtn');
         const saveJsonBtn = document.getElementById('saveJsonBtn');
         const cancelEditBtn = document.getElementById('cancelEditBtn');
+        
+        // Visual controls
+        const visualPortraitBtn = document.getElementById('portraitBtn');
+        const visualLandscapeBtn = document.getElementById('landscapeBtn');
+        const visualZoomInBtn = document.getElementById('zoomInBtn');
+        const visualZoomOutBtn = document.getElementById('zoomOutBtn');
+        const resetZoomBtn = document.getElementById('resetZoomBtn');
 
 
         newSkinBtn.addEventListener('click', () => this.showNewSkinModal());
@@ -90,6 +103,13 @@ class EmuController {
         editJsonBtn.addEventListener('click', () => this.enableJsonEditMode());
         saveJsonBtn.addEventListener('click', () => this.saveJsonChanges());
         cancelEditBtn.addEventListener('click', () => this.cancelJsonEdit());
+        
+        // Visual control events
+        visualPortraitBtn.addEventListener('click', () => this.setOrientation('portrait'));
+        visualLandscapeBtn.addEventListener('click', () => this.setOrientation('landscape'));
+        visualZoomInBtn.addEventListener('click', () => this.zoomIn());
+        visualZoomOutBtn.addEventListener('click', () => this.zoomOut());
+        resetZoomBtn.addEventListener('click', () => this.resetZoom());
 
     }
 
@@ -303,6 +323,9 @@ class EmuController {
         
         // Update JSON viewer
         this.updateJsonViewer();
+        
+        // Initialize visual renderer
+        this.initializeVisualRenderer();
         
         console.log('Current skin data:', this.currentSkin);
     }
@@ -546,6 +569,377 @@ class EmuController {
         } finally {
             templateEl.classList.remove('loading');
         }
+    }
+    
+    // Visual Renderer Methods
+    initializeVisualRenderer() {
+        const container = document.getElementById('deviceFrame');
+        if (!container) {
+            console.error('Device frame container not found!');
+            return;
+        }
+        
+        this.visualRenderer = new VisualRenderer(container, this.currentSkin, this);
+        this.visualRenderer.render();
+        this.updateDeviceInfo();
+        this.setupVisualControls();
+    }
+    
+    setupVisualControls() {
+        // Orientation controls
+        const portraitBtn = document.getElementById('portraitBtn');
+        const landscapeBtn = document.getElementById('landscapeBtn');
+        
+        portraitBtn.addEventListener('click', () => {
+            this.switchOrientation('portrait');
+        });
+        
+        landscapeBtn.addEventListener('click', () => {
+            this.switchOrientation('landscape');
+        });
+        
+        // Zoom controls
+        const zoomInBtn = document.getElementById('zoomInBtn');
+        const zoomOutBtn = document.getElementById('zoomOutBtn');
+        const resetZoomBtn = document.getElementById('resetZoomBtn');
+        
+        zoomInBtn.addEventListener('click', () => {
+            this.adjustZoom(0.1);
+        });
+        
+        zoomOutBtn.addEventListener('click', () => {
+            this.adjustZoom(-0.1);
+        });
+        
+        resetZoomBtn.addEventListener('click', () => {
+            this.resetZoom();
+        });
+    }
+    
+    switchOrientation(orientation) {
+        // Update button states
+        document.querySelectorAll('.orientation-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        document.querySelector(`[data-orientation="${orientation}"]`).classList.add('active');
+        
+        // Update renderer
+        if (this.visualRenderer) {
+            this.visualRenderer.setOrientation(orientation);
+            this.visualRenderer.render();
+            this.updateDeviceInfo();
+        }
+    }
+    
+    adjustZoom(delta) {
+        if (this.visualRenderer) {
+            const newZoom = this.visualRenderer.zoomLevel + delta;
+            this.visualRenderer.setZoomLevel(newZoom);
+            this.visualRenderer.applyScaling();
+            this.updateZoomDisplay();
+        }
+    }
+    
+    resetZoom() {
+        if (this.visualRenderer) {
+            this.visualRenderer.setZoomLevel(1.0);
+            this.visualRenderer.applyScaling();
+            this.updateZoomDisplay();
+        }
+    }
+    
+    updateZoomDisplay() {
+        const zoomLevel = document.getElementById('zoomLevel');
+        if (zoomLevel && this.visualRenderer) {
+            zoomLevel.textContent = `${Math.round(this.visualRenderer.zoomLevel * 100)}%`;
+        }
+    }
+    
+    updateDeviceInfo() {
+        const deviceModel = document.getElementById('deviceModel');
+        const screenSize = document.getElementById('screenSize');
+        
+        if (this.currentSkin) {
+            const mappingSize = this.getMappingSize();
+            deviceModel.textContent = 'iPhone';
+            screenSize.textContent = `${mappingSize.width} × ${mappingSize.height}`;
+        }
+    }
+    
+    getMappingSize() {
+        if (!this.currentSkin) return { width: 0, height: 0 };
+        
+        const orientationData = this.currentSkin.representations?.iphone?.edgeToEdge?.[this.currentOrientation];
+        
+        if (!orientationData || !orientationData.mappingSize) {
+            // Fallback to portrait
+            const portrait = this.currentSkin.representations?.iphone?.edgeToEdge?.portrait;
+            if (!portrait || !portrait.mappingSize) return { width: 0, height: 0 };
+            
+            const { width, height } = portrait.mappingSize;
+            return this.currentOrientation === 'landscape' ? { width: height, height: width } : { width, height };
+        }
+        
+        return orientationData.mappingSize;
+    }
+    
+    setOrientation(orientation) {
+        if (this.currentOrientation === orientation) return;
+        
+        this.currentOrientation = orientation;
+        
+        // Update button states
+        document.getElementById('portraitBtn').classList.toggle('active', orientation === 'portrait');
+        document.getElementById('landscapeBtn').classList.toggle('active', orientation === 'landscape');
+        
+        // Update device frame
+        const deviceFrame = document.getElementById('deviceFrame');
+        deviceFrame.className = orientation === 'landscape' ? 'device-frame landscape' : 'device-frame';
+        
+        // Re-render visual
+        if (this.visualRenderer) {
+            this.visualRenderer.setOrientation(orientation);
+            this.visualRenderer.render();
+        }
+        
+        this.updateDeviceInfo();
+    }
+    
+    zoomIn() {
+        if (this.zoomLevel < 2) {
+            this.zoomLevel = Math.min(2, this.zoomLevel * 1.2);
+            this.applyZoom();
+        }
+    }
+    
+    zoomOut() {
+        if (this.zoomLevel > 0.3) {
+            this.zoomLevel = Math.max(0.3, this.zoomLevel / 1.2);
+            this.applyZoom();
+        }
+    }
+    
+    resetZoom() {
+        this.zoomLevel = 1;
+        this.applyZoom();
+    }
+    
+    applyZoom() {
+        const deviceFrame = document.getElementById('deviceFrame');
+        const zoomLevel = document.getElementById('zoomLevel');
+        
+        if (deviceFrame) {
+            deviceFrame.style.transform = `scale(${this.zoomLevel})`;
+        }
+        
+        if (zoomLevel) {
+            zoomLevel.textContent = `${Math.round(this.zoomLevel * 100)}%`;
+        }
+    }
+}
+
+// Visual Renderer Class
+class VisualRenderer {
+    constructor(container, skinData, controller) {
+        this.container = container;
+        this.skinData = skinData;
+        this.controller = controller;
+        this.currentOrientation = 'portrait';
+        this.zoomLevel = 1.0;
+        this.buttons = [];
+    }
+    
+    setOrientation(orientation) {
+        this.currentOrientation = orientation;
+    }
+    
+    setZoomLevel(level) {
+        this.zoomLevel = Math.max(0.5, Math.min(2.0, level));
+    }
+    
+    applyScaling() {
+        const visualContainer = this.container.closest('.visual-container');
+        if (visualContainer) {
+            visualContainer.style.transform = `scale(${this.zoomLevel})`;
+        }
+    }
+    
+    render() {
+        this.setupContainer();
+        this.renderScreens();
+        this.renderButtons();
+        this.applyScaling();
+    }
+    
+    setupContainer() {
+        const mappingSize = this.getMappingSize();
+        const screenArea = this.container.querySelector('#screenArea');
+        
+        if (screenArea) {
+            screenArea.style.width = `${mappingSize.width}px`;
+            screenArea.style.height = `${mappingSize.height}px`;
+        }
+    }
+    
+    getMappingSize() {
+        if (!this.skinData) return { width: 430, height: 932 };
+        
+        const orientationData = this.skinData.representations?.iphone?.edgeToEdge?.[this.currentOrientation];
+        
+        if (!orientationData || !orientationData.mappingSize) {
+            // Fallback to portrait
+            const portrait = this.skinData.representations?.iphone?.edgeToEdge?.portrait;
+            if (!portrait || !portrait.mappingSize) return { width: 430, height: 932 };
+            
+            const { width, height } = portrait.mappingSize;
+            return this.currentOrientation === 'landscape' ? { width: height, height: width } : { width, height };
+        }
+        
+        return orientationData.mappingSize;
+    }
+    
+    getItemsForOrientation() {
+        if (!this.skinData) return [];
+        
+        const orientationData = this.skinData.representations?.iphone?.edgeToEdge?.[this.currentOrientation];
+        return orientationData?.items || [];
+    }
+    
+    getScreensForOrientation() {
+        if (!this.skinData) return [];
+        
+        const orientationData = this.skinData.representations?.iphone?.edgeToEdge?.[this.currentOrientation];
+        return orientationData?.screens || [];
+    }
+    
+    renderScreens() {
+        const gameScreen = this.container.querySelector('#gameScreen');
+        if (!gameScreen) return;
+        
+        // Clear existing screen content (except label)
+        const label = gameScreen.querySelector('.game-screen-label');
+        gameScreen.innerHTML = '';
+        if (label) gameScreen.appendChild(label);
+        
+        const screens = this.getScreensForOrientation();
+        
+        screens.forEach((screen, index) => {
+            if (screen.outputFrame) {
+                this.createGameScreen(screen.outputFrame, index);
+            }
+        });
+    }
+    
+    createGameScreen(outputFrame, index) {
+        const gameScreen = this.container.querySelector('#gameScreen');
+        if (!gameScreen) return;
+        
+        const screenElement = document.createElement('div');
+        screenElement.className = `game-screen-area game-screen-${index}`;
+        
+        // Position and size the screen based on outputFrame
+        screenElement.style.position = 'absolute';
+        screenElement.style.left = `${outputFrame.x}px`;
+        screenElement.style.top = `${outputFrame.y}px`;
+        screenElement.style.width = `${outputFrame.width}px`;
+        screenElement.style.height = `${outputFrame.height}px`;
+        
+        // Style the game screen area
+        screenElement.style.backgroundColor = '#000';
+        screenElement.style.border = '1px solid #333';
+        screenElement.style.borderRadius = '4px';
+        screenElement.style.display = 'flex';
+        screenElement.style.alignItems = 'center';
+        screenElement.style.justifyContent = 'center';
+        screenElement.style.color = '#666';
+        screenElement.style.fontSize = '12px';
+        screenElement.style.fontFamily = 'monospace';
+        
+        // Add screen identifier
+        screenElement.textContent = `Screen ${index + 1}`;
+        screenElement.title = `Game Screen ${index + 1} (${outputFrame.width}×${outputFrame.height})`;
+        
+        gameScreen.appendChild(screenElement);
+    }
+    
+    renderButtons() {
+        const buttonLayer = this.container.querySelector('#buttonLayer');
+        if (!buttonLayer) return;
+        
+        // Clear existing buttons
+        buttonLayer.innerHTML = '';
+        
+        const items = this.getItemsForOrientation();
+        items.forEach((item, index) => {
+            const buttonEl = this.createButton(item, index);
+            buttonLayer.appendChild(buttonEl);
+        });
+    }
+    
+    createButton(item, index) {
+        if (!item.frame) return document.createElement('div');
+        
+        const button = document.createElement('div');
+        button.className = `skin-button button-${this.getButtonType(item.inputs)}`;
+        button.style.left = `${item.frame.x}px`;
+        button.style.top = `${item.frame.y}px`;
+        button.style.width = `${item.frame.width}px`;
+        button.style.height = `${item.frame.height}px`;
+        button.textContent = this.getButtonLabel(item.inputs);
+        button.dataset.index = index;
+        
+        // Add click handler for future interactions
+        button.addEventListener('click', () => this.onButtonClick(index));
+        
+        return button;
+    }
+    
+    getButtonType(inputs) {
+        if (!inputs) return 'unknown';
+        
+        // Handle object-style inputs (like d-pad)
+        if (typeof inputs === 'object' && !Array.isArray(inputs)) {
+            if (inputs.up && inputs.down && inputs.left && inputs.right) {
+                return 'dpad';
+            }
+            return 'directional';
+        }
+        
+        // Handle array-style inputs (single buttons)
+        if (Array.isArray(inputs)) {
+            const input = inputs[0];
+            if (['a', 'b', 'x', 'y'].includes(input)) return 'action';
+            if (['l', 'r', 'l2', 'r2'].includes(input)) return 'shoulder';
+            if (['start', 'select'].includes(input)) return 'system';
+            if (['menu', 'quickSave', 'quickLoad', 'toggleFastForward'].includes(input)) return 'utility';
+            return 'action';
+        }
+        
+        return 'unknown';
+    }
+    
+    getButtonLabel(inputs) {
+        if (!inputs) return 'BTN';
+        
+        // Handle object-style inputs (like d-pad)
+        if (typeof inputs === 'object' && !Array.isArray(inputs)) {
+            if (inputs.up && inputs.down && inputs.left && inputs.right) {
+                return 'D-PAD';
+            }
+            return Object.keys(inputs)[0].toUpperCase();
+        }
+        
+        // Handle array-style inputs
+        if (Array.isArray(inputs)) {
+            return inputs[0].toUpperCase();
+        }
+        
+        return 'BTN';
+    }
+    
+    onButtonClick(index) {
+        console.log(`Button ${index} clicked`);
+        // Future: Handle button interactions
     }
 }
 
