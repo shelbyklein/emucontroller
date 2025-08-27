@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EmuController - Emulator Skin Editor</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="welcome-screen" id="welcomeScreen">
+            <div class="header">
+                <h1>EmuController</h1>
+                <p>Create and edit emulator skins for iOS</p>
+            </div>
+            
+            <div class="options">
+                <button class="option-btn new-skin-btn" id="newSkinBtn">
+                    <div class="option-icon">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <line x1="12" y1="8" x2="12" y2="16"/>
+                            <line x1="8" y1="12" x2="16" y2="12"/>
+                        </svg>
+                    </div>
+                    <h3>Create New Skin</h3>
+                    <p>Start from scratch with a blank configuration</p>
+                </button>
+                
+                <button class="option-btn import-btn" id="importBtn">
+                    <div class="option-icon">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="7,10 12,15 17,10"/>
+                            <line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                    </div>
+                    <h3>Import Existing Skin</h3>
+                    <p>Load a JSON configuration file to edit</p>
+                </button>
+            </div>
+            
+            <input type="file" id="fileInput" accept=".json" style="display: none;">
+        </div>
+
+        <!-- New Skin Modal -->
+        <div class="modal-overlay" id="newSkinModal" style="display: none;">
+            <div class="modal">
+                <div class="modal-header">
+                    <h3>Create New Skin</h3>
+                    <button class="close-btn" id="closeModal">&times;</button>
+                </div>
+                
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="skinName">Skin Name</label>
+                        <input type="text" id="skinName" placeholder="My Custom Skin" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="skinIdentifier">Identifier</label>
+                        <input type="text" id="skinIdentifier" placeholder="com.yourname.skin.identifier" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Console Type</label>
+                        <div class="console-grid" id="consoleGrid">
+                            <!-- Console options will be populated by JavaScript -->
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="iphoneModel">Target iPhone Model</label>
+                        <select id="iphoneModel" required>
+                            <option value="">Select iPhone Model</option>
+                            <!-- Options will be populated by JavaScript -->
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" id="cancelModal">Cancel</button>
+                    <button class="btn btn-primary" id="createSkinBtn">Create Skin</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="editor-screen" id="editorScreen" style="display: none;">
+            <!-- Editor interface will go here -->
+            <div class="editor-header">
+                <button class="back-btn" id="backBtn">← Back to Home</button>
+                <h2 id="skinTitle">Untitled Skin</h2>
+            </div>
+            <div class="editor-content">
+                <p>Editor interface coming soon...</p>
+            </div>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
