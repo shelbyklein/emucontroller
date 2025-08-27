@@ -404,6 +404,9 @@ class EmuController {
         jsonEditor.value = this.originalJsonContent;
         jsonEditor.focus();
         
+        // Add live preview with debouncing
+        this.setupLivePreview(jsonEditor);
+        
         // Update button states
         document.getElementById('editJsonBtn').disabled = true;
         document.getElementById('copyJsonBtn').disabled = true;
@@ -427,6 +430,9 @@ class EmuController {
         
         // Clear editor
         jsonEditor.value = '';
+        
+        // Clean up live preview
+        this.cleanupLivePreview();
     }
 
     saveJsonChanges() {
@@ -451,13 +457,14 @@ class EmuController {
             // Update current skin
             this.currentSkin = parsedJson;
             
-            
-            
             // Exit edit mode
             this.cancelJsonEdit();
             
             // Update viewer with new data
             this.updateJsonViewer();
+            
+            // Refresh visual representation
+            this.refreshVisualRepresentation();
             
             // Visual feedback
             this.showSaveConfirmation();
@@ -614,6 +621,27 @@ class EmuController {
         resetZoomBtn.addEventListener('click', () => {
             this.resetZoom();
         });
+        
+        // Add keyboard shortcuts for zoom
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey || e.metaKey) {
+                if (e.key === '=' || e.key === '+') {
+                    e.preventDefault();
+                    this.adjustZoom(0.1);
+                } else if (e.key === '-') {
+                    e.preventDefault();
+                    this.adjustZoom(-0.1);
+                } else if (e.key === '0') {
+                    e.preventDefault();
+                    this.resetZoom();
+                }
+            }
+        });
+        
+        // Add resize handler for responsiveness
+        window.addEventListener('resize', () => {
+            this.handleResize();
+        });
     }
     
     switchOrientation(orientation) {
@@ -653,6 +681,96 @@ class EmuController {
         if (zoomLevel && this.visualRenderer) {
             zoomLevel.textContent = `${Math.round(this.visualRenderer.zoomLevel * 100)}%`;
         }
+    }
+    
+    refreshVisualRepresentation() {
+        if (this.visualRenderer) {
+            // Update the renderer's skin data
+            this.visualRenderer.skinData = this.currentSkin;
+            
+            // Re-render everything
+            this.visualRenderer.render();
+            
+            // Update device info
+            this.updateDeviceInfo();
+        }
+    }
+    
+    setupLivePreview(jsonEditor) {
+        let debounceTimer;
+        
+        this.livePreviewHandler = (e) => {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                this.tryLivePreview(e.target.value);
+            }, 500); // 500ms debounce
+        };
+        
+        jsonEditor.addEventListener('input', this.livePreviewHandler);
+    }
+    
+    cleanupLivePreview() {
+        if (this.livePreviewHandler) {
+            const jsonEditor = document.getElementById('jsonEditor');
+            if (jsonEditor) {
+                jsonEditor.removeEventListener('input', this.livePreviewHandler);
+            }
+            this.livePreviewHandler = null;
+        }
+    }
+    
+    tryLivePreview(jsonContent) {
+        if (!jsonContent.trim()) return;
+        
+        try {
+            const parsedJson = JSON.parse(jsonContent);
+            
+            // Basic validation
+            if (this.validateSkinData(parsedJson)) {
+                // Create temporary backup
+                const originalSkin = this.currentSkin;
+                
+                // Update for preview
+                this.currentSkin = parsedJson;
+                this.refreshVisualRepresentation();
+                
+                // Clear any previous error styling
+                this.clearJsonErrors();
+            }
+        } catch (error) {
+            // Show error highlighting but don't update visual
+            this.highlightJsonError(error.message);
+        }
+    }
+    
+    clearJsonErrors() {
+        const jsonEditor = document.getElementById('jsonEditor');
+        if (jsonEditor) {
+            jsonEditor.classList.remove('json-error');
+        }
+    }
+    
+    highlightJsonError(errorMessage) {
+        const jsonEditor = document.getElementById('jsonEditor');
+        if (jsonEditor) {
+            jsonEditor.classList.add('json-error');
+            jsonEditor.title = `JSON Error: ${errorMessage}`;
+        }
+    }
+    
+    handleResize() {
+        // Debounce resize events
+        if (this.resizeTimer) clearTimeout(this.resizeTimer);
+        
+        this.resizeTimer = setTimeout(() => {
+            if (this.visualRenderer) {
+                // Re-apply scaling to adjust to new container size
+                this.visualRenderer.applyScaling();
+                
+                // Update device info if needed
+                this.updateDeviceInfo();
+            }
+        }, 250);
     }
     
     updateDeviceInfo() {
@@ -836,6 +954,7 @@ class VisualRenderer {
         
         const screenElement = document.createElement('div');
         screenElement.className = `game-screen-area game-screen-${index}`;
+        screenElement.dataset.screenIndex = index;
         
         // Position and size the screen based on outputFrame
         screenElement.style.position = 'absolute';
@@ -854,10 +973,16 @@ class VisualRenderer {
         screenElement.style.color = '#666';
         screenElement.style.fontSize = '12px';
         screenElement.style.fontFamily = 'monospace';
+        screenElement.style.cursor = 'move';
+        screenElement.style.userSelect = 'none';
         
         // Add screen identifier
         screenElement.textContent = `Screen ${index + 1}`;
-        screenElement.title = `Game Screen ${index + 1} (${outputFrame.width}×${outputFrame.height})`;
+        screenElement.title = `Game Screen ${index + 1} (${outputFrame.width}×${outputFrame.height}) - Drag to reposition`;
+        
+        // Make screen draggable with mouse events
+        screenElement.addEventListener('mousedown', (e) => this.onScreenMouseDown(e, index));
+        screenElement.addEventListener('click', (e) => this.onScreenClick(e, index));
         
         gameScreen.appendChild(screenElement);
     }
@@ -869,12 +994,15 @@ class VisualRenderer {
         // Clear existing buttons
         buttonLayer.innerHTML = '';
         
+        // Note: Using mouse-based dragging, no HTML5 drop zone needed
+        
         const items = this.getItemsForOrientation();
         items.forEach((item, index) => {
             const buttonEl = this.createButton(item, index);
             buttonLayer.appendChild(buttonEl);
         });
     }
+    
     
     createButton(item, index) {
         if (!item.frame) return document.createElement('div');
@@ -888,8 +1016,15 @@ class VisualRenderer {
         button.textContent = this.getButtonLabel(item.inputs);
         button.dataset.index = index;
         
+        // Make button draggable with mouse events (no ghost image)
+        button.draggable = false;
+        button.style.cursor = 'move';
+        
+        // Add mouse-based drag event handlers
+        button.addEventListener('mousedown', (e) => this.onMouseDown(e, index));
+        
         // Add click handler for future interactions
-        button.addEventListener('click', () => this.onButtonClick(index));
+        button.addEventListener('click', (e) => this.onButtonClick(e, index));
         
         return button;
     }
@@ -937,9 +1072,326 @@ class VisualRenderer {
         return 'BTN';
     }
     
-    onButtonClick(index) {
-        console.log(`Button ${index} clicked`);
-        // Future: Handle button interactions
+    onButtonClick(e, index) {
+        // Only handle click if it wasn't a drag operation
+        if (!this.isDragging) {
+            console.log(`Button ${index} clicked`);
+            // Future: Handle button interactions
+        }
+    }
+    
+    onMouseDown(e, index) {
+        e.preventDefault();
+        
+        this.isDragging = false;
+        this.dragStartTime = Date.now();
+        
+        // Get button element and its current position
+        const button = e.target;
+        const rect = button.getBoundingClientRect();
+        const containerRect = this.container.querySelector('#buttonLayer').getBoundingClientRect();
+        
+        // Store drag data
+        this.dragData = {
+            index: index,
+            button: button,
+            startX: rect.left - containerRect.left,
+            startY: rect.top - containerRect.top,
+            offsetX: e.clientX - rect.left,
+            offsetY: e.clientY - rect.top,
+            startMouseX: e.clientX,
+            startMouseY: e.clientY
+        };
+        
+        // Visual feedback
+        button.classList.add('dragging');
+        
+        // Add document event listeners for drag
+        document.addEventListener('mousemove', this.onMouseMove);
+        document.addEventListener('mouseup', this.onMouseUp);
+        
+        // Prevent text selection
+        document.body.style.userSelect = 'none';
+    }
+    
+    onMouseMove = (e) => {
+        if (!this.dragData) return;
+        
+        e.preventDefault();
+        
+        // Check if we've moved enough to consider this a drag
+        const deltaX = Math.abs(e.clientX - this.dragData.startMouseX);
+        const deltaY = Math.abs(e.clientY - this.dragData.startMouseY);
+        
+        if (deltaX > 3 || deltaY > 3) {
+            this.isDragging = true;
+        }
+        
+        if (!this.isDragging) return;
+        
+        // Calculate new position relative to container
+        const containerRect = this.container.querySelector('#buttonLayer').getBoundingClientRect();
+        const scale = this.zoomLevel || 1;
+        
+        let newX = (e.clientX - containerRect.left - this.dragData.offsetX) / scale;
+        let newY = (e.clientY - containerRect.top - this.dragData.offsetY) / scale;
+        
+        // Constrain to container bounds
+        const mappingSize = this.getMappingSize();
+        const buttonWidth = parseInt(this.dragData.button.style.width);
+        const buttonHeight = parseInt(this.dragData.button.style.height);
+        
+        newX = Math.max(0, Math.min(newX, mappingSize.width - buttonWidth));
+        newY = Math.max(0, Math.min(newY, mappingSize.height - buttonHeight));
+        
+        // Update button position instantly
+        this.dragData.button.style.left = `${newX}px`;
+        this.dragData.button.style.top = `${newY}px`;
+    }
+    
+    onMouseUp = (e) => {
+        if (!this.dragData) return;
+        
+        const button = this.dragData.button;
+        
+        // Remove document event listeners
+        document.removeEventListener('mousemove', this.onMouseMove);
+        document.removeEventListener('mouseup', this.onMouseUp);
+        
+        // Reset visual feedback
+        button.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        
+        // Check if this was actually a drag
+        const dragDuration = Date.now() - this.dragStartTime;
+        const wasDragged = this.isDragging && dragDuration > 100;
+        
+        if (wasDragged) {
+            // Update the JSON data with new position
+            const newX = parseInt(button.style.left);
+            const newY = parseInt(button.style.top);
+            
+            this.updateButtonPosition(this.dragData.index, newX, newY);
+        }
+        
+        // Reset drag state
+        setTimeout(() => {
+            this.isDragging = false;
+        }, 50);
+        
+        this.dragData = null;
+    }
+    
+    updateButtonPosition(index, newX, newY) {
+        const items = this.getItemsForOrientation();
+        if (items[index] && items[index].frame) {
+            // Update the frame position
+            items[index].frame.x = Math.round(newX);
+            items[index].frame.y = Math.round(newY);
+            
+            // Update the skin data
+            const orientationData = this.skinData.representations?.iphone?.edgeToEdge?.[this.currentOrientation];
+            if (orientationData && orientationData.items) {
+                orientationData.items[index] = items[index];
+            }
+            
+            // Refresh the JSON viewer to show updated data (via controller)
+            if (this.controller && this.controller.updateJsonViewer) {
+                this.controller.updateJsonViewer();
+            }
+            
+            // Show feedback
+            this.showDragFeedback(index, newX, newY);
+        }
+    }
+    
+    showDragFeedback(index, x, y) {
+        // Create temporary feedback element
+        const feedback = document.createElement('div');
+        feedback.className = 'drag-feedback';
+        feedback.textContent = `Button ${index + 1} moved to (${x}, ${y})`;
+        feedback.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--success);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 12px;
+            z-index: 10000;
+            animation: fadeInOut 2s ease-in-out forwards;
+        `;
+        
+        document.body.appendChild(feedback);
+        
+        // Remove after animation
+        setTimeout(() => {
+            if (feedback.parentNode) {
+                feedback.parentNode.removeChild(feedback);
+            }
+        }, 2000);
+    }
+    
+    onScreenClick(e, index) {
+        // Only handle click if it wasn't a drag operation
+        if (!this.isScreenDragging) {
+            console.log(`Screen ${index + 1} clicked`);
+            // Future: Handle screen interactions
+        }
+    }
+    
+    onScreenMouseDown(e, index) {
+        e.preventDefault();
+        
+        this.isScreenDragging = false;
+        this.screenDragStartTime = Date.now();
+        
+        // Get screen element and its current position
+        const screen = e.target;
+        const rect = screen.getBoundingClientRect();
+        const containerRect = this.container.querySelector('#gameScreen').getBoundingClientRect();
+        
+        // Store screen drag data
+        this.screenDragData = {
+            index: index,
+            screen: screen,
+            startX: rect.left - containerRect.left,
+            startY: rect.top - containerRect.top,
+            offsetX: e.clientX - rect.left,
+            offsetY: e.clientY - rect.top,
+            startMouseX: e.clientX,
+            startMouseY: e.clientY
+        };
+        
+        // Visual feedback
+        screen.classList.add('dragging');
+        
+        // Add document event listeners for drag
+        document.addEventListener('mousemove', this.onScreenMouseMove);
+        document.addEventListener('mouseup', this.onScreenMouseUp);
+        
+        // Prevent text selection
+        document.body.style.userSelect = 'none';
+    }
+    
+    onScreenMouseMove = (e) => {
+        if (!this.screenDragData) return;
+        
+        e.preventDefault();
+        
+        // Check if we've moved enough to consider this a drag
+        const deltaX = Math.abs(e.clientX - this.screenDragData.startMouseX);
+        const deltaY = Math.abs(e.clientY - this.screenDragData.startMouseY);
+        
+        if (deltaX > 3 || deltaY > 3) {
+            this.isScreenDragging = true;
+        }
+        
+        if (!this.isScreenDragging) return;
+        
+        // Calculate new position relative to container
+        const containerRect = this.container.querySelector('#gameScreen').getBoundingClientRect();
+        const scale = this.zoomLevel || 1;
+        
+        let newX = (e.clientX - containerRect.left - this.screenDragData.offsetX) / scale;
+        let newY = (e.clientY - containerRect.top - this.screenDragData.offsetY) / scale;
+        
+        // Constrain to container bounds
+        const mappingSize = this.getMappingSize();
+        const screenWidth = parseInt(this.screenDragData.screen.style.width);
+        const screenHeight = parseInt(this.screenDragData.screen.style.height);
+        
+        newX = Math.max(0, Math.min(newX, mappingSize.width - screenWidth));
+        newY = Math.max(0, Math.min(newY, mappingSize.height - screenHeight));
+        
+        // Update screen position instantly
+        this.screenDragData.screen.style.left = `${newX}px`;
+        this.screenDragData.screen.style.top = `${newY}px`;
+    }
+    
+    onScreenMouseUp = (e) => {
+        if (!this.screenDragData) return;
+        
+        const screen = this.screenDragData.screen;
+        
+        // Remove document event listeners
+        document.removeEventListener('mousemove', this.onScreenMouseMove);
+        document.removeEventListener('mouseup', this.onScreenMouseUp);
+        
+        // Reset visual feedback
+        screen.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        
+        // Check if this was actually a drag
+        const dragDuration = Date.now() - this.screenDragStartTime;
+        const wasDragged = this.isScreenDragging && dragDuration > 100;
+        
+        if (wasDragged) {
+            // Update the JSON data with new position
+            const newX = parseInt(screen.style.left);
+            const newY = parseInt(screen.style.top);
+            
+            this.updateScreenPosition(this.screenDragData.index, newX, newY);
+        }
+        
+        // Reset drag state
+        setTimeout(() => {
+            this.isScreenDragging = false;
+        }, 50);
+        
+        this.screenDragData = null;
+    }
+    
+    updateScreenPosition(index, newX, newY) {
+        const screens = this.getScreensForOrientation();
+        if (screens[index] && screens[index].outputFrame) {
+            // Update the outputFrame position
+            screens[index].outputFrame.x = Math.round(newX);
+            screens[index].outputFrame.y = Math.round(newY);
+            
+            // Update the skin data
+            const orientationData = this.skinData.representations?.iphone?.edgeToEdge?.[this.currentOrientation];
+            if (orientationData && orientationData.screens) {
+                orientationData.screens[index] = screens[index];
+            }
+            
+            // Refresh the JSON viewer to show updated data (via controller)
+            if (this.controller && this.controller.updateJsonViewer) {
+                this.controller.updateJsonViewer();
+            }
+            
+            // Show feedback
+            this.showScreenDragFeedback(index, newX, newY);
+        }
+    }
+    
+    showScreenDragFeedback(index, x, y) {
+        // Create temporary feedback element
+        const feedback = document.createElement('div');
+        feedback.className = 'drag-feedback';
+        feedback.textContent = `Screen ${index + 1} moved to (${x}, ${y})`;
+        feedback.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--success);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 12px;
+            z-index: 10000;
+            animation: fadeInOut 2s ease-in-out forwards;
+        `;
+        
+        document.body.appendChild(feedback);
+        
+        // Remove after animation
+        setTimeout(() => {
+            if (feedback.parentNode) {
+                feedback.parentNode.removeChild(feedback);
+            }
+        }, 2000);
     }
 }
 
