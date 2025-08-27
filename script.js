@@ -315,8 +315,7 @@ class EmuController {
         // Update page title
         document.title = `EmuController - ${skinName}`;
         
-        // Update JSON viewer and load from localStorage if available
-        this.loadFromLocalStorage();
+        // Update JSON viewer
         this.updateJsonViewer();
         
         // Initialize canvas
@@ -674,8 +673,6 @@ class EmuController {
             // Update current skin
             this.currentSkin = parsedJson;
             
-            // Save to localStorage
-            this.saveToLocalStorage();
             
             // Exit edit mode
             this.cancelJsonEdit();
@@ -691,33 +688,6 @@ class EmuController {
         }
     }
 
-    saveToLocalStorage() {
-        try {
-            const skinKey = `emucontroller_skin_${this.currentSkin.identifier}`;
-            localStorage.setItem(skinKey, JSON.stringify(this.currentSkin));
-            localStorage.setItem('emucontroller_current_skin', skinKey);
-        } catch (error) {
-            console.error('Failed to save to localStorage:', error);
-        }
-    }
-
-    loadFromLocalStorage() {
-        try {
-            const currentSkinKey = localStorage.getItem('emucontroller_current_skin');
-            if (currentSkinKey) {
-                const savedSkin = localStorage.getItem(currentSkinKey);
-                if (savedSkin) {
-                    const parsedSkin = JSON.parse(savedSkin);
-                    // Only load if it matches the current skin identifier
-                    if (parsedSkin.identifier === this.currentSkin.identifier) {
-                        this.currentSkin = parsedSkin;
-                    }
-                }
-            }
-        } catch (error) {
-            console.error('Failed to load from localStorage:', error);
-        }
-    }
 
     showSaveConfirmation() {
         const saveBtn = document.getElementById('saveJsonBtn');
