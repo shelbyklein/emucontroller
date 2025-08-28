@@ -358,6 +358,138 @@ body {
     color: white;
 }
 
+/* Menu Insets Editor */
+.menu-insets-editor {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-primary);
+}
+
+.menu-insets-editor h4 {
+    margin: 0 0 12px 0;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.help-text {
+    font-size: 0.7rem;
+    font-weight: 400;
+    color: var(--text-muted);
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+.insets-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.inset-control {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.inset-control label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    text-transform: capitalize;
+}
+
+.slider-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.inset-slider {
+    flex: 1;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--bg-primary);
+    outline: none;
+    cursor: pointer;
+    appearance: none;
+}
+
+.inset-slider::-webkit-slider-thumb {
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: white;
+    cursor: pointer;
+    border: 2px solid var(--bg-secondary);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transition: all 0.2s ease;
+}
+
+.inset-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 8px rgba(74, 158, 255, 0.4);
+}
+
+.inset-slider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: white;
+    cursor: pointer;
+    border: 2px solid var(--bg-secondary);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transition: all 0.2s ease;
+}
+
+.slider-value {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Consolas', 'Courier New', monospace;
+    min-width: 35px;
+    text-align: right;
+}
+
+/* Menu Inset Lines in Game Screen */
+.menu-inset-line {
+    position: absolute;
+    pointer-events: none;
+    z-index: 15;
+    opacity: 0.8;
+}
+
+.menu-inset-line.bottom-line {
+    left: 0;
+    right: 0;
+    height: 2px;
+    border-top: 2px dotted var(--accent-primary);
+    bottom: 0;
+}
+
+.menu-inset-line.left-line {
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    border-right: 2px dotted var(--accent-primary);
+    left: 0;
+}
+
+.menu-inset-line.right-line {
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    border-left: 2px dotted var(--accent-primary);
+    right: 0;
+}
+
+.inset-control.hidden {
+    display: none;
+}
+
 .editor-main {
     background: var(--bg-primary);
     border-right: 1px solid var(--border-primary);

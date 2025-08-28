@@ -158,6 +158,34 @@
                                 <!-- Current buttons will be listed here -->
                             </div>
                         </div>
+                        
+                        <div class="menu-insets-editor">
+                            <h4>Menu Insets <span class="help-text">(Safe areas for menu overlay)</span></h4>
+                            
+                            <div class="insets-controls" id="insetsControls">
+                                <div class="inset-control" id="insetBottomControl">
+                                    <label for="insetBottom">Bottom</label>
+                                    <div class="slider-container">
+                                        <input type="range" id="insetBottom" min="0" max="100" value="0" class="inset-slider">
+                                        <span class="slider-value" id="insetBottomValue">0%</span>
+                                    </div>
+                                </div>
+                                <div class="inset-control" id="insetLeftControl">
+                                    <label for="insetLeft">Left</label>
+                                    <div class="slider-container">
+                                        <input type="range" id="insetLeft" min="0" max="100" value="0" class="inset-slider">
+                                        <span class="slider-value" id="insetLeftValue">0%</span>
+                                    </div>
+                                </div>
+                                <div class="inset-control" id="insetRightControl">
+                                    <label for="insetRight">Right</label>
+                                    <div class="slider-container">
+                                        <input type="range" id="insetRight" min="0" max="100" value="0" class="inset-slider">
+                                        <span class="slider-value" id="insetRightValue">0%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 
@@ -205,6 +233,9 @@
                             <div class="screen-area" id="screenArea">
                                 <div class="game-screen" id="gameScreen">
                                     <span class="game-screen-label">Game Screen</span>
+                                    <div class="menu-inset-line bottom-line" id="bottomInsetLine"></div>
+                                    <div class="menu-inset-line left-line" id="leftInsetLine"></div>
+                                    <div class="menu-inset-line right-line" id="rightInsetLine"></div>
                                 </div>
                                 <div class="button-layer" id="buttonLayer">
                                     <!-- Dynamic buttons will be rendered here -->

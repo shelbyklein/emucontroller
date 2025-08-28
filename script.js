@@ -121,6 +121,12 @@ class EmuController {
         visualZoomInBtn.addEventListener('click', () => this.zoomIn());
         visualZoomOutBtn.addEventListener('click', () => this.zoomOut());
         resetZoomBtn.addEventListener('click', () => this.resetZoom());
+        
+        // Menu insets slider events
+        const insetSliders = document.querySelectorAll('.inset-slider');
+        insetSliders.forEach(slider => {
+            slider.addEventListener('input', (e) => this.onInsetSliderChange(e));
+        });
 
     }
 
@@ -343,6 +349,9 @@ class EmuController {
         
         // Initialize device size selector
         this.initializeDeviceSelector();
+        
+        // Initialize menu insets sliders
+        this.initializeMenuInsetsSliders();
         
         console.log('Current skin data:', this.currentSkin);
     }
@@ -1141,6 +1150,138 @@ class EmuController {
         }, 3000);
     }
     
+    onInsetSliderChange(event) {
+        const slider = event.target;
+        const insetType = slider.id.replace('inset', '').toLowerCase();
+        const percentage = parseInt(slider.value);
+        const decimalValue = percentage / 100;
+        
+        // Update the display value
+        const valueDisplay = document.getElementById(`${slider.id}Value`);
+        if (valueDisplay) {
+            valueDisplay.textContent = `${percentage}%`;
+        }
+        
+        // Update the JSON configuration
+        this.updateMenuInset(insetType, decimalValue);
+        
+        // Update visual line
+        this.updateInsetLine(insetType, percentage);
+    }
+    
+    updateMenuInset(insetType, value) {
+        if (!this.currentSkin) return;
+        
+        const currentOrientationData = this.getCurrentOrientationData();
+        if (!currentOrientationData) return;
+        
+        // Initialize menuInsets if it doesn't exist
+        if (!currentOrientationData.menuInsets) {
+            currentOrientationData.menuInsets = {};
+        }
+        
+        // Update the specific inset value (keep even if 0)
+        currentOrientationData.menuInsets[insetType] = value;
+        
+        // Update the JSON viewer
+        this.updateJsonViewer();
+    }
+    
+    initializeMenuInsetsSliders() {
+        if (!this.currentSkin) return;
+        
+        // Ensure menuInsets exist in both orientations
+        const portraitData = this.currentSkin.representations?.iphone?.edgeToEdge?.portrait;
+        const landscapeData = this.currentSkin.representations?.iphone?.edgeToEdge?.landscape;
+        
+        if (portraitData && !portraitData.menuInsets) {
+            portraitData.menuInsets = { bottom: 0 };
+        }
+        
+        if (landscapeData && !landscapeData.menuInsets) {
+            landscapeData.menuInsets = { left: 0, right: 0 };
+        }
+        
+        // Always show the appropriate sliders
+        this.updateMenuInsetsDisplay();
+    }
+    
+    getCurrentOrientationData() {
+        if (!this.currentSkin) return null;
+        
+        return this.currentSkin.representations?.iphone?.edgeToEdge?.[this.currentOrientation] || null;
+    }
+    
+    
+    updateMenuInsetsDisplay() {
+        if (!this.currentSkin) return;
+        
+        // Get data from both orientations
+        const portraitData = this.currentSkin.representations?.iphone?.edgeToEdge?.portrait;
+        const landscapeData = this.currentSkin.representations?.iphone?.edgeToEdge?.landscape;
+        
+        const portraitInsets = portraitData?.menuInsets || {};
+        const landscapeInsets = landscapeData?.menuInsets || {};
+        
+        // Define which insets are available for current orientation
+        const availableInsets = this.currentOrientation === 'portrait' 
+            ? ['bottom'] 
+            : ['left', 'right'];
+        
+        // Update controls and lines - always show available ones
+        ['bottom', 'left', 'right'].forEach(insetType => {
+            const control = document.getElementById(`inset${insetType.charAt(0).toUpperCase()}${insetType.slice(1)}Control`);
+            const slider = document.getElementById(`inset${insetType.charAt(0).toUpperCase()}${insetType.slice(1)}`);
+            const valueDisplay = document.getElementById(`inset${insetType.charAt(0).toUpperCase()}${insetType.slice(1)}Value`);
+            const line = document.getElementById(`${insetType}InsetLine`);
+            
+            if (control && line) {
+                if (availableInsets.includes(insetType)) {
+                    control.classList.remove('hidden');
+                    line.style.display = 'block';
+                    
+                    if (slider && valueDisplay) {
+                        // Get value from appropriate orientation
+                        let decimalValue = 0;
+                        if (insetType === 'bottom') {
+                            decimalValue = portraitInsets[insetType] || 0;
+                        } else {
+                            decimalValue = landscapeInsets[insetType] || 0;
+                        }
+                        
+                        const percentageValue = Math.round(decimalValue * 100);
+                        
+                        slider.value = percentageValue;
+                        valueDisplay.textContent = `${percentageValue}%`;
+                        
+                        // Update visual line position
+                        this.updateInsetLine(insetType, percentageValue);
+                    }
+                } else {
+                    control.classList.add('hidden');
+                    line.style.display = 'none';
+                }
+            }
+        });
+    }
+    
+    updateInsetLine(insetType, percentage) {
+        const line = document.getElementById(`${insetType}InsetLine`);
+        if (!line) return;
+        
+        // Move the line to the correct position based on percentage
+        if (insetType === 'bottom') {
+            line.style.bottom = `${percentage}%`;
+        } else if (insetType === 'left') {
+            line.style.left = `${percentage}%`;
+        } else if (insetType === 'right') {
+            line.style.right = `${percentage}%`;
+        }
+        
+        // Show/hide line based on value
+        line.style.opacity = percentage > 0 ? '0.8' : '0.3';
+    }
+    
     updateDeviceInfo() {
         const deviceModel = document.getElementById('deviceModel');
         const screenSize = document.getElementById('screenSize');
@@ -1189,6 +1330,7 @@ class EmuController {
         }
         
         this.updateDeviceInfo();
+        this.updateMenuInsetsDisplay();
     }
     
     zoomIn() {

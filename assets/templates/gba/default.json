@@ -210,6 +210,9 @@
             "bottom": 7,
             "left": 7,
             "right": 7
+          },
+           "menuInsets": {
+            "bottom": 0.41
           }
         },
         "landscape": {
@@ -384,7 +387,8 @@
             "right": 15
           },
           "menuInsets": {
-            "bottom": 0.41
+            "left": 0.2,
+            "right": 0.2
           },
           "translucent": true
         }
