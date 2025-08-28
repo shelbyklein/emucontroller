@@ -273,6 +273,27 @@ body {
     transition: all 0.2s ease;
     text-transform: uppercase;
     letter-spacing: 0.3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.button-icon {
+    width: 16px;
+    height: 16px;
+    filter: invert(1);
+    opacity: 0.8;
+}
+
+.available-button .button-icon {
+    width: 20px;
+    height: 20px;
+}
+
+.skin-button .button-icon {
+    width: 18px;
+    height: 18px;
+    filter: invert(1);
 }
 
 .available-button:hover {
@@ -329,6 +350,14 @@ body {
     color: var(--text-primary);
     text-transform: uppercase;
     letter-spacing: 0.3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.current-button-name .button-icon {
+    width: 16px;
+    height: 16px;
 }
 
 .current-button-coords {

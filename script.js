@@ -878,8 +878,22 @@ class EmuController {
         availableButtons.forEach(buttonType => {
             const buttonEl = document.createElement('div');
             buttonEl.className = 'available-button';
-            buttonEl.textContent = buttonType;
+            // Use our own getButtonIcon method
+            const iconMap = {
+                'dpad': './assets/icons/dpad.svg',
+                'menu': './assets/icons/menu.svg',
+                'toggleFastForward': './assets/icons/fast-forward.svg',
+                'fastForward': './assets/icons/fast-forward.svg'
+            };
+            
+            const iconPath = iconMap[buttonType];
+            if (iconPath) {
+                buttonEl.innerHTML = `<img src="${iconPath}" alt="${buttonType}" class="button-icon">`;
+            } else {
+                buttonEl.textContent = buttonType.toUpperCase();
+            }
             buttonEl.dataset.buttonType = buttonType;
+            buttonEl.title = buttonType; // Add tooltip for accessibility
             
             // Always allow adding buttons (multiple instances allowed)
             buttonEl.addEventListener('click', () => this.addButton(buttonType));
@@ -916,7 +930,12 @@ class EmuController {
         
         const nameEl = document.createElement('div');
         nameEl.className = 'current-button-name';
-        nameEl.textContent = this.getButtonDisplayName(item.inputs);
+        const displayName = this.getButtonDisplayName(item.inputs);
+        if (displayName.includes('<img')) {
+            nameEl.innerHTML = displayName;
+        } else {
+            nameEl.textContent = displayName;
+        }
         
         const coordsEl = document.createElement('div');
         coordsEl.className = 'current-button-coords';
@@ -962,16 +981,53 @@ class EmuController {
         return itemEl;
     }
     
+    getButtonIcon(buttonType) {
+        const iconMap = {
+            'dpad': './assets/icons/dpad.svg',
+            'menu': './assets/icons/menu.svg',
+            'toggleFastForward': './assets/icons/fast-forward.svg',
+            'fastForward': './assets/icons/fast-forward.svg'
+        };
+        
+        const iconPath = iconMap[buttonType];
+        if (iconPath) {
+            return `<img src="${iconPath}" alt="${buttonType}" class="button-icon">`;
+        }
+        
+        // Fallback to text for buttons without specific icons
+        return buttonType.toUpperCase();
+    }
+    
     getButtonDisplayName(inputs) {
         if (!inputs) return 'Unknown';
         
         if (typeof inputs === 'object' && !Array.isArray(inputs)) {
-            // D-pad style input
-            return 'D-PAD';
+            // D-pad style input - use icon only
+            if (inputs.up && inputs.down && inputs.left && inputs.right) {
+                return '<img src="./assets/icons/dpad.svg" alt="D-PAD" class="button-icon" title="D-PAD">';
+            }
+            return Object.keys(inputs)[0].toUpperCase();
         }
         
         if (Array.isArray(inputs)) {
-            return inputs[0].toUpperCase();
+            const buttonType = inputs[0];
+            // Check if we have an icon for this button type
+            const iconMap = {
+                'dpad': './assets/icons/dpad.svg',
+                'menu': './assets/icons/menu.svg',
+                'toggleFastForward': './assets/icons/fast-forward.svg',
+                'fastForward': './assets/icons/fast-forward.svg'
+            };
+            
+            const iconPath = iconMap[buttonType];
+            if (iconPath) {
+                // Better alt text for icon-only display
+                const altText = buttonType === 'toggleFastForward' ? 'TOGGLE FAST FORWARD' : 
+                               buttonType === 'fastForward' ? 'FAST FORWARD' : 
+                               buttonType.toUpperCase();
+                return `<img src="${iconPath}" alt="${altText}" class="button-icon" title="${altText}">`;
+            }
+            return buttonType.toUpperCase();
         }
         
         return 'Button';
@@ -1905,7 +1961,12 @@ class VisualRenderer {
         button.style.top = `${item.frame.y}px`;
         button.style.width = `${item.frame.width}px`;
         button.style.height = `${item.frame.height}px`;
-        button.textContent = this.getButtonLabel(item.inputs);
+        const buttonLabel = this.getButtonLabel(item.inputs);
+        if (buttonLabel.includes('<img')) {
+            button.innerHTML = buttonLabel;
+        } else {
+            button.textContent = buttonLabel;
+        }
         button.dataset.index = index;
         
         // Make button draggable with mouse events (no ghost image)
@@ -1951,14 +2012,21 @@ class VisualRenderer {
         // Handle object-style inputs (like d-pad)
         if (typeof inputs === 'object' && !Array.isArray(inputs)) {
             if (inputs.up && inputs.down && inputs.left && inputs.right) {
-                return 'D-PAD';
+                return this.getButtonIcon('dpad');
             }
             return Object.keys(inputs)[0].toUpperCase();
         }
         
         // Handle array-style inputs
         if (Array.isArray(inputs)) {
-            return inputs[0].toUpperCase();
+            const buttonType = inputs[0];
+            // Return icon if available, otherwise return text
+            const iconHtml = this.getButtonIcon(buttonType);
+            // If iconHtml contains an img tag, return it; otherwise it's just text
+            if (iconHtml.includes('<img')) {
+                return iconHtml;
+            }
+            return buttonType.toUpperCase();
         }
         
         return 'BTN';
@@ -2314,6 +2382,23 @@ class VisualRenderer {
         buttons.forEach(button => {
             button.classList.remove('list-hovered');
         });
+    }
+    
+    getButtonIcon(buttonType) {
+        const iconMap = {
+            'dpad': './assets/icons/dpad.svg',
+            'menu': './assets/icons/menu.svg',
+            'toggleFastForward': './assets/icons/fast-forward.svg',
+            'fastForward': './assets/icons/fast-forward.svg'
+        };
+        
+        const iconPath = iconMap[buttonType];
+        if (iconPath) {
+            return `<img src="${iconPath}" alt="${buttonType}" class="button-icon">`;
+        }
+        
+        // Fallback to text for buttons without specific icons
+        return buttonType.toUpperCase();
     }
 }
 
