@@ -116,6 +116,73 @@
                 </div>
             </div>
         </div>
+
+        <!-- Button Edit Modal -->
+        <div class="modal-overlay" id="buttonEditModal" style="display: none;">
+            <div class="modal">
+                <div class="modal-header">
+                    <h3>Edit Button</h3>
+                    <button class="close-btn" id="closeButtonEditModal">&times;</button>
+                </div>
+                
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="editButtonInputs">Input(s)</label>
+                        <input type="text" id="editButtonInputs" placeholder="e.g., a, b, menu" required>
+                        <small class="help-text">For multiple inputs, separate with commas (e.g., "up,down,left,right" for d-pad)</small>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editButtonX">X Position</label>
+                            <input type="number" id="editButtonX" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="editButtonY">Y Position</label>
+                            <input type="number" id="editButtonY" min="0" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editButtonWidth">Width</label>
+                            <input type="number" id="editButtonWidth" min="1" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="editButtonHeight">Height</label>
+                            <input type="number" id="editButtonHeight" min="1" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Extended Edges</label>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="editExtendedTop">Top</label>
+                                <input type="number" id="editExtendedTop" min="0" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label for="editExtendedRight">Right</label>
+                                <input type="number" id="editExtendedRight" min="0" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label for="editExtendedBottom">Bottom</label>
+                                <input type="number" id="editExtendedBottom" min="0" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label for="editExtendedLeft">Left</label>
+                                <input type="number" id="editExtendedLeft" min="0" value="0">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" id="cancelButtonEdit">Cancel</button>
+                    <button class="btn btn-primary" id="saveButtonEdit">Save Changes</button>
+                </div>
+            </div>
+        </div>
         
         <div class="editor-screen" id="editorScreen" style="display: none;">
             <div class="editor-header">

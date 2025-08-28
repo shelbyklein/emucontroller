@@ -14,6 +14,9 @@ class EmuController {
         this.currentOrientation = 'portrait';
         this.zoomLevel = 1;
         
+        // Store uploaded image data for export
+        this.uploadedImages = new Map(); // filename -> imageData
+        
         this.init();
     }
 
@@ -158,6 +161,15 @@ class EmuController {
                 this.addCustomButton();
             }
         });
+        
+        // Button edit modal events
+        const closeButtonEditModal = document.getElementById('closeButtonEditModal');
+        const cancelButtonEdit = document.getElementById('cancelButtonEdit');
+        const saveButtonEdit = document.getElementById('saveButtonEdit');
+        
+        closeButtonEditModal.addEventListener('click', () => this.hideButtonEditModal());
+        cancelButtonEdit.addEventListener('click', () => this.hideButtonEditModal());
+        saveButtonEdit.addEventListener('click', () => this.saveButtonEdits());
 
     }
 
@@ -490,8 +502,20 @@ class EmuController {
         // Add each unique image file to the zip
         for (const imageFileName of imageFiles) {
             try {
-                // Check if it's a template image (external file)
-                if (!imageFileName.startsWith('data:')) {
+                // Check if it's an uploaded image that we have stored data for
+                if (this.uploadedImages.has(imageFileName)) {
+                    // It's a user-uploaded image
+                    const imageData = this.uploadedImages.get(imageFileName);
+                    const base64Data = imageData.split(',')[1];
+                    const mimeType = imageData.split(';')[0].split(':')[1];
+                    const extension = mimeType.split('/')[1];
+                    
+                    // Use the original filename or create a clean filename
+                    const cleanFileName = imageFileName.includes('.') ? imageFileName : `${imageFileName}.${extension}`;
+                    
+                    // Convert base64 to binary and add to zip
+                    zip.file(cleanFileName, base64Data, { base64: true });
+                } else {
                     // It's a template image, try to fetch it
                     const imagePath = imageFileName.startsWith('./') ? imageFileName : `./${imageFileName}`;
                     
@@ -506,33 +530,9 @@ class EmuController {
                         console.warn(`Could not fetch template image: ${imagePath}`, fetchError);
                         // Continue without this image - user may need to add it manually
                     }
-                } else {
-                    // It's a data URL (user-uploaded image)
-                    const base64Data = imageFileName.split(',')[1];
-                    const mimeType = imageFileName.split(';')[0].split(':')[1];
-                    const extension = mimeType.split('/')[1];
-                    const fileName = `background.${extension}`;
-                    
-                    // Convert base64 to binary and add to zip
-                    zip.file(fileName, base64Data, { base64: true });
-                    
-                    // Update the JSON to reference the file instead of data URL
-                    this.updateImageReferencesInSkin(imageFileName, fileName);
                 }
             } catch (error) {
                 console.warn(`Failed to process image ${imageFileName}:`, error);
-            }
-        }
-    }
-
-    updateImageReferencesInSkin(oldReference, newReference) {
-        const representations = this.currentSkin.representations;
-        if (!representations?.iphone?.edgeToEdge) return;
-        
-        const orientations = representations.iphone.edgeToEdge;
-        for (const [, orientationData] of Object.entries(orientations)) {
-            if (orientationData.assets?.large === oldReference) {
-                orientationData.assets.large = newReference;
             }
         }
     }
@@ -1078,6 +1078,18 @@ class EmuController {
             }
         });
         
+        // Add click event listener to open edit modal
+        itemEl.addEventListener('click', (e) => {
+            // Don't open modal if click was on remove button
+            if (e.target.closest('.btn-small')) {
+                return;
+            }
+            this.showButtonEditModal(item, index);
+        });
+        
+        // Add visual feedback for clickable item
+        itemEl.style.cursor = 'pointer';
+        
         return itemEl;
     }
     
@@ -1230,6 +1242,124 @@ class EmuController {
             this.visualRenderer.render();
             this.updateJsonViewer();
             this.updateButtonPanel();
+        }
+    }
+    
+    showButtonEditModal(item, index) {
+        this.editingButtonIndex = index;
+        this.editingButtonItem = { ...item };
+        
+        // Populate form fields
+        this.populateEditForm(item);
+        
+        // Show modal
+        const modal = document.getElementById('buttonEditModal');
+        modal.style.display = 'flex';
+    }
+    
+    hideButtonEditModal() {
+        const modal = document.getElementById('buttonEditModal');
+        modal.style.display = 'none';
+        this.editingButtonIndex = null;
+        this.editingButtonItem = null;
+    }
+    
+    populateEditForm(item) {
+        // Handle inputs (can be array or object)
+        const inputsField = document.getElementById('editButtonInputs');
+        if (Array.isArray(item.inputs)) {
+            inputsField.value = item.inputs.join(', ');
+        } else if (typeof item.inputs === 'object') {
+            // For d-pad style inputs, show as comma-separated values
+            inputsField.value = Object.values(item.inputs).join(', ');
+        } else {
+            inputsField.value = item.inputs || '';
+        }
+        
+        // Frame properties
+        document.getElementById('editButtonX').value = item.frame?.x || 0;
+        document.getElementById('editButtonY').value = item.frame?.y || 0;
+        document.getElementById('editButtonWidth').value = item.frame?.width || 60;
+        document.getElementById('editButtonHeight').value = item.frame?.height || 60;
+        
+        // Extended edges
+        document.getElementById('editExtendedTop').value = item.extendedEdges?.top || 0;
+        document.getElementById('editExtendedRight').value = item.extendedEdges?.right || 0;
+        document.getElementById('editExtendedBottom').value = item.extendedEdges?.bottom || 0;
+        document.getElementById('editExtendedLeft').value = item.extendedEdges?.left || 0;
+    }
+    
+    saveButtonEdits() {
+        if (this.editingButtonIndex === null) return;
+        
+        // Get values from form
+        const inputsValue = document.getElementById('editButtonInputs').value.trim();
+        const x = parseInt(document.getElementById('editButtonX').value);
+        const y = parseInt(document.getElementById('editButtonY').value);
+        const width = parseInt(document.getElementById('editButtonWidth').value);
+        const height = parseInt(document.getElementById('editButtonHeight').value);
+        const extendedTop = parseInt(document.getElementById('editExtendedTop').value);
+        const extendedRight = parseInt(document.getElementById('editExtendedRight').value);
+        const extendedBottom = parseInt(document.getElementById('editExtendedBottom').value);
+        const extendedLeft = parseInt(document.getElementById('editExtendedLeft').value);
+        
+        // Validate inputs
+        if (!inputsValue) {
+            alert('Please enter input value(s)');
+            return;
+        }
+        
+        if (isNaN(x) || isNaN(y) || isNaN(width) || isNaN(height)) {
+            alert('Please enter valid numeric values for position and size');
+            return;
+        }
+        
+        // Process inputs
+        let processedInputs;
+        const inputParts = inputsValue.split(',').map(s => s.trim()).filter(s => s);
+        
+        if (inputParts.length === 1) {
+            processedInputs = inputParts;
+        } else if (inputParts.length === 4 && 
+                   inputParts.includes('up') && inputParts.includes('down') && 
+                   inputParts.includes('left') && inputParts.includes('right')) {
+            // D-pad style
+            processedInputs = {
+                up: 'up',
+                down: 'down',
+                left: 'left',
+                right: 'right'
+            };
+        } else {
+            processedInputs = inputParts;
+        }
+        
+        // Update the button item
+        const orientationData = this.currentSkin.representations?.iphone?.edgeToEdge?.[this.visualRenderer.currentOrientation];
+        if (orientationData && orientationData.items && orientationData.items[this.editingButtonIndex]) {
+            const buttonItem = orientationData.items[this.editingButtonIndex];
+            
+            buttonItem.inputs = processedInputs;
+            buttonItem.frame = {
+                x: x,
+                y: y,
+                width: width,
+                height: height
+            };
+            buttonItem.extendedEdges = {
+                top: extendedTop,
+                right: extendedRight,
+                bottom: extendedBottom,
+                left: extendedLeft
+            };
+            
+            // Refresh visual and panels
+            this.visualRenderer.render();
+            this.updateJsonViewer();
+            this.updateButtonPanel();
+            
+            // Hide modal
+            this.hideButtonEditModal();
         }
     }
     
@@ -1573,6 +1703,9 @@ class EmuController {
     setBackgroundImage(filename, imageData, width, height) {
         if (!this.currentSkin) return;
         
+        // Store the image data for export
+        this.uploadedImages.set(filename, imageData);
+        
         // Update assets.large in current orientation
         const currentOrientationData = this.getCurrentOrientationData();
         if (currentOrientationData) {
@@ -1738,6 +1871,13 @@ class EmuController {
         // Remove from assets
         const currentOrientationData = this.getCurrentOrientationData();
         if (currentOrientationData?.assets?.large) {
+            const filename = currentOrientationData.assets.large;
+            
+            // Remove from uploaded images map if it exists
+            if (this.uploadedImages.has(filename)) {
+                this.uploadedImages.delete(filename);
+            }
+            
             delete currentOrientationData.assets.large;
             
             // Remove empty assets object
