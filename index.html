@@ -186,6 +186,43 @@
                                 </div>
                             </div>
                         </div>
+                        
+                        <div class="background-image-editor">
+                            <h4>Background Image</h4>
+                            
+                            <div class="background-upload">
+                                <input type="file" id="backgroundImageInput" accept=".png,.jpg,.jpeg" style="display: none;">
+                                <button class="btn btn-secondary" id="uploadBackgroundBtn">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-15a2 2 0 0 1 2-2h7"/>
+                                        <polyline points="16,2 21,2 21,7"/>
+                                        <line x1="21" y1="2" x2="11" y2="12"/>
+                                    </svg>
+                                    Upload Image
+                                </button>
+                                <button class="btn btn-outline" id="removeBackgroundBtn" style="display: none;">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="3,6 5,6 21,6"/>
+                                        <path d="m19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,2h4a2,2 0 0,1 2,2v2"/>
+                                    </svg>
+                                    Remove
+                                </button>
+                            </div>
+                            
+                            <div class="background-info" id="backgroundInfo" style="display: none;">
+                                <div class="background-details">
+                                    <div class="background-filename" id="backgroundFilename"></div>
+                                    <div class="background-size" id="backgroundSize"></div>
+                                </div>
+                                <div class="background-opacity-control">
+                                    <label for="backgroundOpacity">Background Opacity</label>
+                                    <div class="slider-container">
+                                        <input type="range" id="backgroundOpacity" min="0" max="100" value="50" class="inset-slider">
+                                        <span class="slider-value" id="backgroundOpacityValue">50%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 

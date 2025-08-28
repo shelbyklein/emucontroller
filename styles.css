@@ -190,8 +190,8 @@ body {
 .editor-layout {
     display: grid;
     grid-template-columns: minmax(50px, 300px) 1fr 400px;
-    height: calc(100vh - 80px);
-    overflow: hidden;
+    /* height: calc(100vh - 80px); */
+    /* overflow: hidden; */
 }
 
 .button-panel {
@@ -490,6 +490,90 @@ body {
     display: none;
 }
 
+/* Background Image Editor */
+.background-image-editor {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-primary);
+}
+
+.background-image-editor h4 {
+    margin: 0 0 12px 0;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.background-upload {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.background-upload .btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    padding: 6px 12px;
+}
+
+.btn-outline {
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid var(--border-secondary);
+}
+
+.btn-outline:hover {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border-color: var(--border-primary);
+}
+
+.background-info {
+    background: var(--bg-tertiary);
+    border-radius: 4px;
+    padding: 12px;
+    border: 1px solid var(--border-secondary);
+    min-height: 120px; /* Ensure enough space for all content */
+}
+
+.background-details {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 12px;
+}
+
+.background-opacity-control {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border-secondary);
+}
+
+.background-opacity-control label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    text-transform: capitalize;
+}
+
+.background-filename {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Consolas', 'Courier New', monospace;
+}
+
+.background-size {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+}
+
 .editor-main {
     background: var(--bg-primary);
     border-right: 1px solid var(--border-primary);
@@ -711,7 +795,7 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background: #0a0a0a;
+    /* background: #0a0a0a; */
     display: flex;
     align-items: center;
     justify-content: center;

@@ -127,6 +127,19 @@ class EmuController {
         insetSliders.forEach(slider => {
             slider.addEventListener('input', (e) => this.onInsetSliderChange(e));
         });
+        
+        // Background image events
+        const uploadBackgroundBtn = document.getElementById('uploadBackgroundBtn');
+        const removeBackgroundBtn = document.getElementById('removeBackgroundBtn');
+        const backgroundImageInput = document.getElementById('backgroundImageInput');
+        
+        uploadBackgroundBtn.addEventListener('click', () => this.triggerBackgroundUpload());
+        removeBackgroundBtn.addEventListener('click', () => this.removeBackgroundImage());
+        backgroundImageInput.addEventListener('change', (e) => this.handleBackgroundImageUpload(e));
+        
+        // Background opacity slider
+        const backgroundOpacitySlider = document.getElementById('backgroundOpacity');
+        backgroundOpacitySlider.addEventListener('input', (e) => this.onBackgroundOpacityChange(e));
 
     }
 
@@ -353,6 +366,7 @@ class EmuController {
         // Initialize menu insets sliders (after DOM update)
         requestAnimationFrame(() => {
             this.initializeMenuInsetsSliders();
+            this.initializeBackgroundImage();
         });
         
         console.log('Current skin data:', this.currentSkin);
@@ -1287,6 +1301,193 @@ class EmuController {
         line.style.display = 'block';
     }
     
+    // Background Image Methods
+    triggerBackgroundUpload() {
+        const fileInput = document.getElementById('backgroundImageInput');
+        fileInput.click();
+    }
+    
+    handleBackgroundImageUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        // Validate file type
+        const validTypes = ['image/png', 'image/jpeg', 'image/jpg'];
+        if (!validTypes.includes(file.type)) {
+            alert('Please upload a PNG or JPG image file.');
+            return;
+        }
+        
+        // Validate file size (max 10MB)
+        const maxSize = 10 * 1024 * 1024;
+        if (file.size > maxSize) {
+            alert('File size too large. Please upload an image smaller than 10MB.');
+            return;
+        }
+        
+        // Read file as data URL for preview and background
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const imageData = e.target.result;
+            const filename = file.name;
+            
+            // Create an image to get dimensions
+            const img = new Image();
+            img.onload = () => {
+                this.setBackgroundImage(filename, imageData, img.width, img.height);
+            };
+            img.src = imageData;
+        };
+        reader.readAsDataURL(file);
+        
+        // Reset file input
+        event.target.value = '';
+    }
+    
+    setBackgroundImage(filename, imageData, width, height) {
+        if (!this.currentSkin) return;
+        
+        // Update assets.large in current orientation
+        const currentOrientationData = this.getCurrentOrientationData();
+        if (currentOrientationData) {
+            if (!currentOrientationData.assets) {
+                currentOrientationData.assets = {};
+            }
+            currentOrientationData.assets.large = filename;
+        }
+        
+        // Update UI elements
+        this.updateBackgroundUI(filename, width, height);
+        
+        // Apply background to screen area
+        this.applyBackgroundToScreen(imageData);
+        
+        // Update JSON viewer
+        this.updateJsonViewer();
+    }
+    
+    updateBackgroundUI(filename, width, height) {
+        const backgroundInfo = document.getElementById('backgroundInfo');
+        const backgroundFilename = document.getElementById('backgroundFilename');
+        const backgroundSize = document.getElementById('backgroundSize');
+        const removeBtn = document.getElementById('removeBackgroundBtn');
+        const opacitySlider = document.getElementById('backgroundOpacity');
+        const opacityValue = document.getElementById('backgroundOpacityValue');
+        
+        // Show background info
+        backgroundInfo.style.display = 'block';
+        removeBtn.style.display = 'inline-flex';
+        
+        // Update details
+        backgroundFilename.textContent = filename;
+        backgroundSize.textContent = `${width} × ${height} pixels`;
+        
+        // Reset opacity slider to 50%
+        opacitySlider.value = 50;
+        opacityValue.textContent = '50%';
+    }
+    
+    applyBackgroundToScreen(imageData) {
+        const screenArea = document.getElementById('screenArea');
+        const gameScreen = document.getElementById('gameScreen');
+        
+        if (screenArea) {
+            screenArea.style.backgroundImage = `url(${imageData})`;
+            screenArea.style.backgroundSize = 'cover';
+            screenArea.style.backgroundPosition = 'center';
+            screenArea.style.backgroundRepeat = 'no-repeat';
+        }
+        
+        if (gameScreen) {
+            // Set game screen to have a semi-transparent background color overlay
+            gameScreen.style.backgroundColor = 'rgba(10, 10, 10, 0.5)'; // Start at 50% opacity
+        }
+    }
+    
+    onBackgroundOpacityChange(event) {
+        const percentage = parseInt(event.target.value);
+        const opacity = percentage / 100;
+        
+        // Update display value
+        const valueDisplay = document.getElementById('backgroundOpacityValue');
+        if (valueDisplay) {
+            valueDisplay.textContent = `${percentage}%`;
+        }
+        
+        // Apply opacity to game screen background color overlay
+        const gameScreen = document.getElementById('gameScreen');
+        if (gameScreen) {
+            gameScreen.style.backgroundColor = `rgba(10, 10, 10, ${opacity})`;
+        }
+    }
+    
+    removeBackgroundImage() {
+        if (!this.currentSkin) return;
+        
+        // Remove from assets
+        const currentOrientationData = this.getCurrentOrientationData();
+        if (currentOrientationData?.assets?.large) {
+            delete currentOrientationData.assets.large;
+            
+            // Remove empty assets object
+            if (Object.keys(currentOrientationData.assets).length === 0) {
+                delete currentOrientationData.assets;
+            }
+        }
+        
+        // Update UI
+        const backgroundInfo = document.getElementById('backgroundInfo');
+        const removeBtn = document.getElementById('removeBackgroundBtn');
+        const screenArea = document.getElementById('screenArea');
+        const gameScreen = document.getElementById('gameScreen');
+        
+        backgroundInfo.style.display = 'none';
+        removeBtn.style.display = 'none';
+        
+        // Remove background from screen area
+        if (screenArea) {
+            screenArea.style.backgroundImage = '';
+            screenArea.style.backgroundSize = '';
+            screenArea.style.backgroundPosition = '';
+            screenArea.style.backgroundRepeat = '';
+        }
+        
+        // Reset game screen background color
+        if (gameScreen) {
+            gameScreen.style.backgroundColor = '';
+        }
+        
+        // Update JSON viewer
+        this.updateJsonViewer();
+    }
+    
+    initializeBackgroundImage() {
+        if (!this.currentSkin) return;
+        
+        const currentOrientationData = this.getCurrentOrientationData();
+        const backgroundAsset = currentOrientationData?.assets?.large;
+        
+        if (backgroundAsset) {
+            // Show remove button and info (but without preview since we don't have the actual image data)
+            const removeBtn = document.getElementById('removeBackgroundBtn');
+            const backgroundInfo = document.getElementById('backgroundInfo');
+            const backgroundFilename = document.getElementById('backgroundFilename');
+            const backgroundSize = document.getElementById('backgroundSize');
+            
+            removeBtn.style.display = 'inline-flex';
+            backgroundInfo.style.display = 'block';
+            backgroundFilename.textContent = backgroundAsset;
+            backgroundSize.textContent = 'External file';
+        } else {
+            // Hide background info
+            const backgroundInfo = document.getElementById('backgroundInfo');
+            const removeBtn = document.getElementById('removeBackgroundBtn');
+            
+            backgroundInfo.style.display = 'none';
+            removeBtn.style.display = 'none';
+        }
+    }
+    
     updateDeviceInfo() {
         const deviceModel = document.getElementById('deviceModel');
         const screenSize = document.getElementById('screenSize');
@@ -1336,6 +1537,7 @@ class EmuController {
         
         this.updateDeviceInfo();
         this.updateMenuInsetsDisplay();
+        this.initializeBackgroundImage();
     }
     
     zoomIn() {
