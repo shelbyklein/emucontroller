@@ -303,6 +303,48 @@ body {
     transform: translateY(-1px);
 }
 
+/* Custom Button Creator */
+.custom-button-creator {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-primary);
+}
+
+.custom-button-creator h4 {
+    margin: 0 0 8px 0;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.custom-input-container {
+    display: flex;
+    gap: 8px;
+}
+
+.custom-input {
+    flex: 1;
+    padding: 6px 8px;
+    border: 1px solid var(--border-primary);
+    border-radius: 4px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 11px;
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+.custom-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(74, 158, 255, 0.1);
+}
+
+.custom-input::placeholder {
+    color: var(--text-muted);
+}
+
 .available-button.disabled {
     opacity: 0.5;
     cursor: not-allowed;

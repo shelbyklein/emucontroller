@@ -147,6 +147,17 @@ class EmuController {
         
         enablePortrait.addEventListener('change', (e) => this.onOrientationToggle('portrait', e.target.checked));
         enableLandscape.addEventListener('change', (e) => this.onOrientationToggle('landscape', e.target.checked));
+        
+        // Custom button creator
+        const addCustomButtonBtn = document.getElementById('addCustomButtonBtn');
+        const customButtonInput = document.getElementById('customButtonInput');
+        
+        addCustomButtonBtn.addEventListener('click', () => this.addCustomButton());
+        customButtonInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                this.addCustomButton();
+            }
+        });
 
     }
 
@@ -1072,6 +1083,59 @@ class EmuController {
         const orientationData = this.currentSkin.representations?.iphone?.edgeToEdge?.[this.visualRenderer.currentOrientation];
         if (orientationData && orientationData.items) {
             orientationData.items.push(newButton);
+            
+            // Refresh visual and panels
+            this.visualRenderer.render();
+            this.updateJsonViewer();
+            this.updateButtonPanel();
+        }
+    }
+    
+    addCustomButton() {
+        const customButtonInput = document.getElementById('customButtonInput');
+        const inputValue = customButtonInput.value.trim();
+        
+        // Validate input
+        if (!inputValue) {
+            alert('Please enter an input name for the custom button.');
+            return;
+        }
+        
+        // Check for valid input name (alphanumeric, underscore, hyphen)
+        if (!/^[a-zA-Z0-9_-]+$/.test(inputValue)) {
+            alert('Input name can only contain letters, numbers, underscores, and hyphens.');
+            return;
+        }
+        
+        // Calculate position to avoid stacking
+        const currentOrientationData = this.currentSkin.representations?.iphone?.edgeToEdge?.[this.visualRenderer.currentOrientation];
+        const existingButtons = currentOrientationData?.items?.length || 0;
+        const offset = existingButtons * 20;
+        
+        // Create custom button
+        const customButton = {
+            inputs: [inputValue],
+            frame: {
+                x: 50 + offset,
+                y: 50 + offset,
+                width: 60,
+                height: 60
+            },
+            extendedEdges: {
+                top: 0,
+                bottom: 0,
+                left: 0,
+                right: 0
+            }
+        };
+        
+        // Add to current skin data
+        const orientationData = this.currentSkin.representations?.iphone?.edgeToEdge?.[this.visualRenderer.currentOrientation];
+        if (orientationData && orientationData.items) {
+            orientationData.items.push(customButton);
+            
+            // Clear input field
+            customButtonInput.value = '';
             
             // Refresh visual and panels
             this.visualRenderer.render();
