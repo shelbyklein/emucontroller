@@ -429,6 +429,70 @@ body {
     height: 16px;
 }
 
+/* Current Screens */
+.current-screens {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-primary);
+}
+
+.current-screens h4 {
+    margin: 0 0 8px 0;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.current-screens-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+    margin-bottom: 12px;
+}
+
+.current-screen-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 8px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 4px;
+    font-size: 10px;
+    transition: all 0.2s ease;
+    min-height: 40px;
+    cursor: pointer;
+}
+
+.current-screen-item:hover {
+    background: var(--bg-tertiary);
+    border-color: var(--border-secondary);
+}
+
+.current-screen-info {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.current-screen-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.current-screen-coords {
+    font-size: 9px;
+    color: var(--text-muted);
+    font-family: monospace;
+    line-height: 1.2;
+    word-break: break-all;
+}
+
 .current-button-coords {
     font-size: 9px;
     color: var(--text-muted);

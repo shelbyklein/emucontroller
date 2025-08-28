@@ -183,6 +183,71 @@
                 </div>
             </div>
         </div>
+
+        <!-- Screen Edit Modal -->
+        <div class="modal-overlay" id="screenEditModal" style="display: none;">
+            <div class="modal">
+                <div class="modal-header">
+                    <h3>Edit Screen</h3>
+                    <button class="close-btn" id="closeScreenEditModal">&times;</button>
+                </div>
+                
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Input Frame (Game Resolution)</label>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="editInputX">X Position</label>
+                                <input type="number" id="editInputX" min="0" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="editInputY">Y Position</label>
+                                <input type="number" id="editInputY" min="0" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="editInputWidth">Width</label>
+                                <input type="number" id="editInputWidth" min="1" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="editInputHeight">Height</label>
+                                <input type="number" id="editInputHeight" min="1" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Output Frame (Display Position & Size)</label>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="editOutputX">X Position</label>
+                                <input type="number" id="editOutputX" min="0" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="editOutputY">Y Position</label>
+                                <input type="number" id="editOutputY" min="0" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="editOutputWidth">Width</label>
+                                <input type="number" id="editOutputWidth" min="1" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="editOutputHeight">Height</label>
+                                <input type="number" id="editOutputHeight" min="1" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" id="cancelScreenEdit">Cancel</button>
+                    <button class="btn btn-primary" id="saveScreenEdit">Save Changes</button>
+                </div>
+            </div>
+        </div>
         
         <div class="editor-screen" id="editorScreen" style="display: none;">
             <div class="editor-header">
@@ -241,6 +306,14 @@
                             <div class="current-buttons-list" id="currentButtonsList">
                                 <!-- Current buttons will be listed here -->
                             </div>
+                        </div>
+                        
+                        <div class="current-screens">
+                            <h4>Current Screens</h4>
+                            <div class="current-screens-list" id="currentScreensList">
+                                <!-- Current screens will be listed here -->
+                            </div>
+                            <button class="btn btn-secondary btn-small" id="addScreenBtn">Add Screen</button>
                         </div>
                         
                         <div class="menu-insets-editor">

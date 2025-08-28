@@ -170,6 +170,19 @@ class EmuController {
         closeButtonEditModal.addEventListener('click', () => this.hideButtonEditModal());
         cancelButtonEdit.addEventListener('click', () => this.hideButtonEditModal());
         saveButtonEdit.addEventListener('click', () => this.saveButtonEdits());
+        
+        // Add screen button event
+        const addScreenBtn = document.getElementById('addScreenBtn');
+        addScreenBtn.addEventListener('click', () => this.addScreen());
+        
+        // Screen edit modal events
+        const closeScreenEditModal = document.getElementById('closeScreenEditModal');
+        const cancelScreenEdit = document.getElementById('cancelScreenEdit');
+        const saveScreenEdit = document.getElementById('saveScreenEdit');
+        
+        closeScreenEditModal.addEventListener('click', () => this.hideScreenEditModal());
+        cancelScreenEdit.addEventListener('click', () => this.hideScreenEditModal());
+        saveScreenEdit.addEventListener('click', () => this.saveScreenEdits());
 
     }
 
@@ -957,6 +970,7 @@ class EmuController {
         
         this.populateAvailableButtons(availableButtons);
         this.populateCurrentButtons();
+        this.populateCurrentScreens();
     }
     
     getConsoleTypeFromIdentifier() {
@@ -1372,6 +1386,216 @@ class EmuController {
             this.visualRenderer.render();
             this.updateJsonViewer();
             this.updateButtonPanel();
+        }
+    }
+    
+    // Screen Management Methods
+    populateCurrentScreens() {
+        const list = document.getElementById('currentScreensList');
+        if (!list) return;
+        
+        // Clear any existing highlights before repopulating
+        if (this.visualRenderer) {
+            this.visualRenderer.unhighlightAllButtons();
+        }
+        
+        list.innerHTML = '';
+        
+        const screens = this.visualRenderer?.getScreensForOrientation() || [];
+        screens.forEach((screen, index) => {
+            const itemEl = this.createCurrentScreenItem(screen, index);
+            list.appendChild(itemEl);
+        });
+    }
+    
+    createCurrentScreenItem(screen, index) {
+        const itemEl = document.createElement('div');
+        itemEl.className = 'current-screen-item';
+        itemEl.dataset.screenIndex = index;
+        
+        const infoEl = document.createElement('div');
+        infoEl.className = 'current-screen-info';
+        
+        const nameEl = document.createElement('div');
+        nameEl.className = 'current-screen-name';
+        nameEl.textContent = `Screen ${index + 1}`;
+        
+        const coordsEl = document.createElement('div');
+        coordsEl.className = 'current-screen-coords';
+        if (screen.outputFrame) {
+            coordsEl.textContent = `(${screen.outputFrame.x}, ${screen.outputFrame.y}) ${screen.outputFrame.width}×${screen.outputFrame.height}`;
+        }
+        
+        infoEl.appendChild(nameEl);
+        infoEl.appendChild(coordsEl);
+        
+        const actionsEl = document.createElement('div');
+        actionsEl.className = 'current-button-actions';
+        
+        const removeBtn = document.createElement('button');
+        removeBtn.className = 'btn-small btn-icon';
+        removeBtn.innerHTML = `
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3,6 5,6 21,6"/>
+                <path d="m19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,2h4a2,2 0 0,1 2,2v2"/>
+            </svg>
+        `;
+        removeBtn.title = 'Remove screen';
+        removeBtn.addEventListener('click', () => this.removeScreen(index));
+        
+        actionsEl.appendChild(removeBtn);
+        
+        itemEl.appendChild(infoEl);
+        itemEl.appendChild(actionsEl);
+        
+        // Add click event listener to open edit modal
+        itemEl.addEventListener('click', (e) => {
+            // Don't open modal if click was on remove button
+            if (e.target.closest('.btn-small')) {
+                return;
+            }
+            this.showScreenEditModal(screen, index);
+        });
+        
+        // Add visual feedback for clickable item
+        itemEl.style.cursor = 'pointer';
+        
+        return itemEl;
+    }
+    
+    addScreen() {
+        const orientationData = this.currentSkin.representations?.iphone?.edgeToEdge?.[this.visualRenderer.currentOrientation];
+        if (!orientationData) return;
+        
+        if (!orientationData.screens) {
+            orientationData.screens = [];
+        }
+        
+        // Calculate position to avoid overlap
+        const existingScreens = orientationData.screens.length;
+        const offset = existingScreens * 20;
+        
+        // Create new screen with default properties
+        const newScreen = {
+            inputFrame: {
+                x: 0,
+                y: 0,
+                width: 256,
+                height: 192
+            },
+            outputFrame: {
+                x: 50 + offset,
+                y: 100 + offset,
+                width: 200,
+                height: 150
+            }
+        };
+        
+        orientationData.screens.push(newScreen);
+        
+        // Refresh visual and panels
+        this.visualRenderer.render();
+        this.updateJsonViewer();
+        this.updateButtonPanel();
+    }
+    
+    removeScreen(index) {
+        const orientationData = this.currentSkin.representations?.iphone?.edgeToEdge?.[this.visualRenderer.currentOrientation];
+        if (orientationData && orientationData.screens) {
+            orientationData.screens.splice(index, 1);
+            
+            // Refresh visual and panels
+            this.visualRenderer.render();
+            this.updateJsonViewer();
+            this.updateButtonPanel();
+        }
+    }
+    
+    // Screen Edit Modal Methods
+    showScreenEditModal(screen, index) {
+        this.editingScreenIndex = index;
+        this.editingScreenItem = { ...screen };
+        
+        // Populate form fields
+        this.populateScreenEditForm(screen);
+        
+        // Show modal
+        const modal = document.getElementById('screenEditModal');
+        modal.style.display = 'flex';
+    }
+    
+    hideScreenEditModal() {
+        const modal = document.getElementById('screenEditModal');
+        modal.style.display = 'none';
+        this.editingScreenIndex = null;
+        this.editingScreenItem = null;
+    }
+    
+    populateScreenEditForm(screen) {
+        // Input frame properties
+        document.getElementById('editInputX').value = screen.inputFrame?.x || 0;
+        document.getElementById('editInputY').value = screen.inputFrame?.y || 0;
+        document.getElementById('editInputWidth').value = screen.inputFrame?.width || 256;
+        document.getElementById('editInputHeight').value = screen.inputFrame?.height || 192;
+        
+        // Output frame properties
+        document.getElementById('editOutputX').value = screen.outputFrame?.x || 0;
+        document.getElementById('editOutputY').value = screen.outputFrame?.y || 0;
+        document.getElementById('editOutputWidth').value = screen.outputFrame?.width || 200;
+        document.getElementById('editOutputHeight').value = screen.outputFrame?.height || 150;
+    }
+    
+    saveScreenEdits() {
+        if (this.editingScreenIndex === null) return;
+        
+        // Get values from form
+        const inputX = parseInt(document.getElementById('editInputX').value);
+        const inputY = parseInt(document.getElementById('editInputY').value);
+        const inputWidth = parseInt(document.getElementById('editInputWidth').value);
+        const inputHeight = parseInt(document.getElementById('editInputHeight').value);
+        const outputX = parseInt(document.getElementById('editOutputX').value);
+        const outputY = parseInt(document.getElementById('editOutputY').value);
+        const outputWidth = parseInt(document.getElementById('editOutputWidth').value);
+        const outputHeight = parseInt(document.getElementById('editOutputHeight').value);
+        
+        // Validate inputs
+        if (isNaN(inputX) || isNaN(inputY) || isNaN(inputWidth) || isNaN(inputHeight) ||
+            isNaN(outputX) || isNaN(outputY) || isNaN(outputWidth) || isNaN(outputHeight)) {
+            alert('Please enter valid numeric values for all fields');
+            return;
+        }
+        
+        if (inputWidth <= 0 || inputHeight <= 0 || outputWidth <= 0 || outputHeight <= 0) {
+            alert('Width and height values must be greater than 0');
+            return;
+        }
+        
+        // Update the screen item
+        const orientationData = this.currentSkin.representations?.iphone?.edgeToEdge?.[this.visualRenderer.currentOrientation];
+        if (orientationData && orientationData.screens && orientationData.screens[this.editingScreenIndex]) {
+            const screenItem = orientationData.screens[this.editingScreenIndex];
+            
+            screenItem.inputFrame = {
+                x: inputX,
+                y: inputY,
+                width: inputWidth,
+                height: inputHeight
+            };
+            
+            screenItem.outputFrame = {
+                x: outputX,
+                y: outputY,
+                width: outputWidth,
+                height: outputHeight
+            };
+            
+            // Refresh visual and panels
+            this.visualRenderer.render();
+            this.updateJsonViewer();
+            this.updateButtonPanel();
+            
+            // Hide modal
+            this.hideScreenEditModal();
         }
     }
     
