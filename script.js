@@ -140,6 +140,13 @@ class EmuController {
         // Background opacity slider
         const backgroundOpacitySlider = document.getElementById('backgroundOpacity');
         backgroundOpacitySlider.addEventListener('input', (e) => this.onBackgroundOpacityChange(e));
+        
+        // Orientation controls
+        const enablePortrait = document.getElementById('enablePortrait');
+        const enableLandscape = document.getElementById('enableLandscape');
+        
+        enablePortrait.addEventListener('change', (e) => this.onOrientationToggle('portrait', e.target.checked));
+        enableLandscape.addEventListener('change', (e) => this.onOrientationToggle('landscape', e.target.checked));
 
     }
 
@@ -367,6 +374,7 @@ class EmuController {
         requestAnimationFrame(() => {
             this.initializeMenuInsetsSliders();
             this.initializeBackgroundImage();
+            this.initializeOrientationControls();
         });
         
         console.log('Current skin data:', this.currentSkin);
@@ -608,6 +616,9 @@ class EmuController {
 
             this.currentSkin = templateData;
             
+            // Extract template name from path (e.g., "./assets/templates/gba/default.json" -> "gba")
+            const templatePathParts = template.path.split('/');
+            this.currentTemplateName = templatePathParts[templatePathParts.length - 2]; // Get the folder name
             
             this.hideTemplateModal();
             this.showEditorScreen(templateData.name);
@@ -870,12 +881,8 @@ class EmuController {
             buttonEl.textContent = buttonType;
             buttonEl.dataset.buttonType = buttonType;
             
-            // Check if button already exists
-            if (this.isButtonInUse(buttonType)) {
-                buttonEl.classList.add('disabled');
-            } else {
-                buttonEl.addEventListener('click', () => this.addButton(buttonType));
-            }
+            // Always allow adding buttons (multiple instances allowed)
+            buttonEl.addEventListener('click', () => this.addButton(buttonType));
             
             grid.appendChild(buttonEl);
         });
@@ -884,6 +891,11 @@ class EmuController {
     populateCurrentButtons() {
         const list = document.getElementById('currentButtonsList');
         if (!list) return;
+        
+        // Clear any existing highlights before repopulating
+        if (this.visualRenderer) {
+            this.visualRenderer.unhighlightAllButtons();
+        }
         
         list.innerHTML = '';
         
@@ -928,6 +940,19 @@ class EmuController {
         itemEl.appendChild(infoEl);
         itemEl.appendChild(actionsEl);
         
+        // Add hover event listeners to highlight corresponding button in visual UI
+        itemEl.addEventListener('mouseenter', () => {
+            if (this.visualRenderer) {
+                this.visualRenderer.highlightButton(index);
+            }
+        });
+        
+        itemEl.addEventListener('mouseleave', () => {
+            if (this.visualRenderer) {
+                this.visualRenderer.unhighlightButton(index);
+            }
+        });
+        
         return itemEl;
     }
     
@@ -946,32 +971,18 @@ class EmuController {
         return 'Button';
     }
     
-    isButtonInUse(buttonType) {
-        if (!this.visualRenderer) return false;
-        
-        const items = this.visualRenderer.getItemsForOrientation() || [];
-        return items.some(item => {
-            if (!item.inputs) return false;
-            
-            if (Array.isArray(item.inputs)) {
-                return item.inputs.includes(buttonType);
-            }
-            
-            if (typeof item.inputs === 'object') {
-                return Object.values(item.inputs).includes(buttonType);
-            }
-            
-            return false;
-        });
-    }
-    
     addButton(buttonType) {
+        // Calculate position to avoid stacking (add some offset for each new button)
+        const currentOrientationData = this.currentSkin.representations?.iphone?.edgeToEdge?.[this.visualRenderer.currentOrientation];
+        const existingButtons = currentOrientationData?.items?.length || 0;
+        const offset = existingButtons * 20; // 20px offset for each existing button
+        
         // Create new button item with default position and size
         const newButton = {
             inputs: [buttonType],
             frame: {
-                x: 50,
-                y: 50,
+                x: 50 + offset,
+                y: 50 + offset,
                 width: 60,
                 height: 60
             },
@@ -1421,6 +1432,91 @@ class EmuController {
         }
     }
     
+    onOrientationToggle(orientation, isEnabled) {
+        if (!this.currentSkin) return;
+        
+        const representations = this.currentSkin.representations;
+        if (!representations.iphone?.edgeToEdge) return;
+        
+        // Prevent disabling both orientations
+        if (!isEnabled) {
+            const otherOrientation = orientation === 'portrait' ? 'landscape' : 'portrait';
+            const hasOtherOrientation = !!representations.iphone.edgeToEdge[otherOrientation];
+            
+            if (!hasOtherOrientation) {
+                // Re-check the checkbox since we're preventing this action
+                const checkbox = document.getElementById(orientation === 'portrait' ? 'enablePortrait' : 'enableLandscape');
+                if (checkbox) checkbox.checked = true;
+                
+                alert('At least one orientation must be enabled.');
+                return;
+            }
+        }
+        
+        const orientationData = representations.iphone.edgeToEdge[orientation];
+        
+        if (isEnabled) {
+            // Enable orientation - ensure it exists (create minimal structure if needed)
+            if (!orientationData) {
+                representations.iphone.edgeToEdge[orientation] = {
+                    assets: {},
+                    items: [],
+                    mappingSize: { width: 430, height: 932 },
+                    screens: [{
+                        inputFrame: { x: 0, y: 0, width: 256, height: 192 },
+                        outputFrame: { x: 0, y: 192, width: 430, height: 289 }
+                    }],
+                    extendedEdges: { top: 7, bottom: 7, left: 7, right: 7 }
+                };
+            }
+        } else {
+            // Disable orientation - remove it from JSON
+            if (orientationData) {
+                delete representations.iphone.edgeToEdge[orientation];
+            }
+        }
+        
+        // Update orientation button states
+        this.updateOrientationButtonStates();
+        
+        // Update visual renderer if we're currently viewing the disabled orientation
+        if (this.currentOrientation === orientation && !isEnabled) {
+            // Switch to the other orientation
+            const otherOrientation = orientation === 'portrait' ? 'landscape' : 'portrait';
+            if (representations.iphone.edgeToEdge[otherOrientation]) {
+                this.switchOrientation(otherOrientation);
+            }
+        }
+        
+        // Update JSON viewer
+        this.updateJsonViewer();
+    }
+    
+    updateOrientationButtonStates() {
+        if (!this.currentSkin) return;
+        
+        const representations = this.currentSkin.representations;
+        const orientationData = representations?.iphone?.edgeToEdge;
+        
+        if (!orientationData) return;
+        
+        const portraitBtn = document.getElementById('portraitBtn');
+        const landscapeBtn = document.getElementById('landscapeBtn');
+        
+        // Disable/enable orientation buttons based on availability
+        if (portraitBtn) {
+            const hasPortrait = !!orientationData.portrait;
+            portraitBtn.disabled = !hasPortrait;
+            portraitBtn.style.opacity = hasPortrait ? '1' : '0.5';
+        }
+        
+        if (landscapeBtn) {
+            const hasLandscape = !!orientationData.landscape;
+            landscapeBtn.disabled = !hasLandscape;
+            landscapeBtn.style.opacity = hasLandscape ? '1' : '0.5';
+        }
+    }
+    
     removeBackgroundImage() {
         if (!this.currentSkin) return;
         
@@ -1461,14 +1557,62 @@ class EmuController {
         this.updateJsonViewer();
     }
     
-    initializeBackgroundImage() {
+    async loadTemplateBackgroundImage(backgroundAsset) {
+        if (!backgroundAsset || !this.currentTemplateName) return;
+        
+        // Construct path to template asset
+        const templatePath = `./assets/templates/${this.currentTemplateName}/${backgroundAsset}`;
+        
+        try {
+            // Check if image exists by trying to load it
+            const img = new Image();
+            
+            return new Promise((resolve) => {
+                img.onload = () => {
+                    // Apply the image to screen area
+                    this.applyBackgroundToScreen(templatePath);
+                    resolve();
+                };
+                
+                img.onerror = () => {
+                    console.warn(`Template background image not found: ${templatePath}`);
+                    resolve(); // Don't reject, just continue without the image
+                };
+                
+                img.src = templatePath;
+            });
+        } catch (error) {
+            console.warn('Failed to load template background image:', error);
+        }
+    }
+    
+    clearBackgroundFromScreen() {
+        const screenArea = document.getElementById('screenArea');
+        const gameScreen = document.getElementById('gameScreen');
+        
+        if (screenArea) {
+            screenArea.style.backgroundImage = '';
+            screenArea.style.backgroundSize = '';
+            screenArea.style.backgroundPosition = '';
+            screenArea.style.backgroundRepeat = '';
+        }
+        
+        if (gameScreen) {
+            gameScreen.style.backgroundColor = '';
+        }
+    }
+    
+    async initializeBackgroundImage() {
         if (!this.currentSkin) return;
         
         const currentOrientationData = this.getCurrentOrientationData();
         const backgroundAsset = currentOrientationData?.assets?.large;
         
         if (backgroundAsset) {
-            // Show remove button and info (but without preview since we don't have the actual image data)
+            // Try to load the external template image
+            await this.loadTemplateBackgroundImage(backgroundAsset);
+            
+            // Show remove button and info
             const removeBtn = document.getElementById('removeBackgroundBtn');
             const backgroundInfo = document.getElementById('backgroundInfo');
             const backgroundFilename = document.getElementById('backgroundFilename');
@@ -1477,15 +1621,40 @@ class EmuController {
             removeBtn.style.display = 'inline-flex';
             backgroundInfo.style.display = 'block';
             backgroundFilename.textContent = backgroundAsset;
-            backgroundSize.textContent = 'External file';
+            backgroundSize.textContent = 'Template image';
         } else {
-            // Hide background info
+            // Clear any existing background and hide background info
+            this.clearBackgroundFromScreen();
             const backgroundInfo = document.getElementById('backgroundInfo');
             const removeBtn = document.getElementById('removeBackgroundBtn');
             
             backgroundInfo.style.display = 'none';
             removeBtn.style.display = 'none';
         }
+    }
+    
+    initializeOrientationControls() {
+        if (!this.currentSkin) return;
+        
+        const representations = this.currentSkin.representations;
+        const orientationData = representations?.iphone?.edgeToEdge;
+        
+        if (!orientationData) return;
+        
+        // Update checkboxes based on current orientations in JSON
+        const enablePortrait = document.getElementById('enablePortrait');
+        const enableLandscape = document.getElementById('enableLandscape');
+        
+        if (enablePortrait) {
+            enablePortrait.checked = !!orientationData.portrait;
+        }
+        
+        if (enableLandscape) {
+            enableLandscape.checked = !!orientationData.landscape;
+        }
+        
+        // Update orientation button states
+        this.updateOrientationButtonStates();
     }
     
     updateDeviceInfo() {
@@ -2109,6 +2278,36 @@ class VisualRenderer {
                 feedback.parentNode.removeChild(feedback);
             }
         }, 2000);
+    }
+    
+    highlightButton(index) {
+        const buttonLayer = this.container.querySelector('#buttonLayer');
+        if (!buttonLayer) return;
+        
+        const button = buttonLayer.querySelector(`[data-index="${index}"]`);
+        if (button) {
+            button.classList.add('list-hovered');
+        }
+    }
+    
+    unhighlightButton(index) {
+        const buttonLayer = this.container.querySelector('#buttonLayer');
+        if (!buttonLayer) return;
+        
+        const button = buttonLayer.querySelector(`[data-index="${index}"]`);
+        if (button) {
+            button.classList.remove('list-hovered');
+        }
+    }
+    
+    unhighlightAllButtons() {
+        const buttonLayer = this.container.querySelector('#buttonLayer');
+        if (!buttonLayer) return;
+        
+        const buttons = buttonLayer.querySelectorAll('.skin-button.list-hovered');
+        buttons.forEach(button => {
+            button.classList.remove('list-hovered');
+        });
     }
 }
 
