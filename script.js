@@ -350,8 +350,10 @@ class EmuController {
         // Initialize device size selector
         this.initializeDeviceSelector();
         
-        // Initialize menu insets sliders
-        this.initializeMenuInsetsSliders();
+        // Initialize menu insets sliders (after DOM update)
+        requestAnimationFrame(() => {
+            this.initializeMenuInsetsSliders();
+        });
         
         console.log('Current skin data:', this.currentSkin);
     }
@@ -1204,6 +1206,7 @@ class EmuController {
         
         // Always show the appropriate sliders
         this.updateMenuInsetsDisplay();
+        
     }
     
     getCurrentOrientationData() {
@@ -1266,7 +1269,8 @@ class EmuController {
     }
     
     updateInsetLine(insetType, percentage) {
-        const line = document.getElementById(`${insetType}InsetLine`);
+        const lineId = `${insetType}InsetLine`;
+        const line = document.getElementById(lineId);
         if (!line) return;
         
         // Move the line to the correct position based on percentage
@@ -1278,8 +1282,9 @@ class EmuController {
             line.style.right = `${percentage}%`;
         }
         
-        // Show/hide line based on value
+        // Always make lines visible (more prominent when there's a value)
         line.style.opacity = percentage > 0 ? '0.8' : '0.3';
+        line.style.display = 'block';
     }
     
     updateDeviceInfo() {
