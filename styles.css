@@ -295,8 +295,8 @@ body {
 }
 
 .current-buttons-list {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     gap: 4px;
 }
 
@@ -304,12 +304,13 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 8px 10px;
+    padding: 6px 8px;
     background: var(--bg-primary);
     border: 1px solid var(--border-primary);
     border-radius: 4px;
-    font-size: 11px;
+    font-size: 10px;
     transition: all 0.2s ease;
+    min-height: 40px;
 }
 
 .current-button-item:hover {
@@ -331,9 +332,11 @@ body {
 }
 
 .current-button-coords {
-    font-size: 10px;
+    font-size: 9px;
     color: var(--text-muted);
     font-family: monospace;
+    line-height: 1.2;
+    word-break: break-all;
 }
 
 .current-button-actions {
@@ -353,6 +356,21 @@ body {
 }
 
 .btn-small:hover {
+    background: var(--danger);
+    border-color: var(--danger);
+    color: white;
+}
+
+.btn-small.btn-icon {
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-small.btn-icon:hover {
     background: var(--danger);
     border-color: var(--danger);
     color: white;
