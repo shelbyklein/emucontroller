@@ -122,7 +122,15 @@
                 <button class="back-btn" id="backBtn">← Back to Home</button>
                 <h2 id="skinTitle">Untitled Skin</h2>
                 <div class="editor-actions">
-                    <button class="btn btn-secondary" id="exportBtn">Export JSON</button>
+                    <div class="export-group">
+                        <select id="exportFormatSelect" class="export-format-select">
+                            <option value="deltaskin">Delta (.deltaskin)</option>
+                            <option value="gammaskin">Gamma (.gammaskin)</option>
+                            <option value="manicskin">Manic (.manicskin)</option>
+                            <option value="zip">ZIP (.zip)</option>
+                        </select>
+                        <button class="btn btn-secondary" id="exportBtn">Export Skin</button>
+                    </div>
                 </div>
             </div>
             
@@ -344,6 +352,7 @@
         </div>
     </div>
     
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

@@ -434,18 +434,107 @@ class EmuController {
         }
     }
 
-    exportSkin() {
-        const jsonStr = JSON.stringify(this.currentSkin, null, 2);
-        const blob = new Blob([jsonStr], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
+    async exportSkin() {
+        if (!this.currentSkin) {
+            alert('No skin to export');
+            return;
+        }
         
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${this.currentSkin.name || 'skin'}.json`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        try {
+            const zip = new JSZip();
+            
+            // Add info.json (the main skin configuration)
+            const jsonStr = JSON.stringify(this.currentSkin, null, 2);
+            zip.file('info.json', jsonStr);
+            
+            // Check for background images and add them to zip
+            await this.addBackgroundImagesToZip(zip);
+            
+            // Generate and download zip file with selected format
+            const zipBlob = await zip.generateAsync({ type: 'blob' });
+            const url = URL.createObjectURL(zipBlob);
+            
+            // Get selected export format
+            const formatSelect = document.getElementById('exportFormatSelect');
+            const selectedFormat = formatSelect.value;
+            const fileName = `${this.currentSkin.name || 'skin'}.${selectedFormat}`;
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+        } catch (error) {
+            console.error('Export failed:', error);
+            alert('Failed to export skin. Please try again.');
+        }
+    }
+
+    async addBackgroundImagesToZip(zip) {
+        const representations = this.currentSkin.representations;
+        if (!representations?.iphone?.edgeToEdge) return;
+        
+        const orientations = representations.iphone.edgeToEdge;
+        const imageFiles = new Set(); // Use Set to avoid duplicates
+        
+        // Collect all background image references
+        for (const [, orientationData] of Object.entries(orientations)) {
+            if (orientationData.assets?.large) {
+                imageFiles.add(orientationData.assets.large);
+            }
+        }
+        
+        // Add each unique image file to the zip
+        for (const imageFileName of imageFiles) {
+            try {
+                // Check if it's a template image (external file)
+                if (!imageFileName.startsWith('data:')) {
+                    // It's a template image, try to fetch it
+                    const imagePath = imageFileName.startsWith('./') ? imageFileName : `./${imageFileName}`;
+                    
+                    // Try to fetch the template image
+                    try {
+                        const response = await fetch(imagePath);
+                        if (response.ok) {
+                            const imageBlob = await response.blob();
+                            zip.file(imageFileName, imageBlob);
+                        }
+                    } catch (fetchError) {
+                        console.warn(`Could not fetch template image: ${imagePath}`, fetchError);
+                        // Continue without this image - user may need to add it manually
+                    }
+                } else {
+                    // It's a data URL (user-uploaded image)
+                    const base64Data = imageFileName.split(',')[1];
+                    const mimeType = imageFileName.split(';')[0].split(':')[1];
+                    const extension = mimeType.split('/')[1];
+                    const fileName = `background.${extension}`;
+                    
+                    // Convert base64 to binary and add to zip
+                    zip.file(fileName, base64Data, { base64: true });
+                    
+                    // Update the JSON to reference the file instead of data URL
+                    this.updateImageReferencesInSkin(imageFileName, fileName);
+                }
+            } catch (error) {
+                console.warn(`Failed to process image ${imageFileName}:`, error);
+            }
+        }
+    }
+
+    updateImageReferencesInSkin(oldReference, newReference) {
+        const representations = this.currentSkin.representations;
+        if (!representations?.iphone?.edgeToEdge) return;
+        
+        const orientations = representations.iphone.edgeToEdge;
+        for (const [, orientationData] of Object.entries(orientations)) {
+            if (orientationData.assets?.large === oldReference) {
+                orientationData.assets.large = newReference;
+            }
+        }
     }
 
     enableJsonEditMode() {
@@ -1976,7 +2065,7 @@ class VisualRenderer {
         screenElement.style.height = `${outputFrame.height}px`;
         
         // Style the game screen area
-        screenElement.style.backgroundColor = '#000';
+        screenElement.style.backgroundColor = '#f0f0f0';
         screenElement.style.border = '1px solid #333';
         screenElement.style.borderRadius = '4px';
         screenElement.style.display = 'flex';

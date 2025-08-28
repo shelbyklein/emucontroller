@@ -186,6 +186,33 @@ body {
     gap: 12px;
 }
 
+.export-group {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.export-format-select {
+    padding: 8px 12px;
+    border: 1px solid var(--border-primary);
+    border-radius: 6px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    outline: none;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.export-format-select:hover {
+    border-color: var(--border-secondary);
+}
+
+.export-format-select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(74, 158, 255, 0.1);
+}
+
 /* Editor Layout */
 .editor-layout {
     display: grid;
@@ -988,7 +1015,7 @@ body {
 /* Game Screen Areas */
 .game-screen-area {
     position: absolute;
-    background: #000000;
+    background: rgba(255,255,255,.5);
     border: 1px solid #333333;
     border-radius: 4px;
     display: flex;
