@@ -331,41 +331,195 @@ class EmuController {
         fileInput.click();
     }
 
-    handleFileImport(event) {
+    async handleFileImport(event) {
         const file = event.target.files[0];
         if (!file) return;
 
-        if (!file.name.endsWith('.json')) {
-            alert('Please select a valid JSON file.');
+        const fileName = file.name.toLowerCase();
+        const supportedExtensions = ['.json', '.deltaskin', '.gammaskin', '.manicskin', '.zip'];
+        
+        if (!supportedExtensions.some(ext => fileName.endsWith(ext))) {
+            alert('Please select a valid skin file (.json, .deltaskin, .gammaskin, .manicskin, or .zip).');
             return;
         }
 
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            try {
-                const skinData = JSON.parse(e.target.result);
-                
-                // Basic validation - check if it has the expected structure
-                if (!this.validateSkinData(skinData)) {
-                    alert('Invalid skin file format. Please select a valid emulator skin JSON file.');
-                    return;
-                }
+        try {
+            let skinData;
+            let skinName;
 
-                this.currentSkin = skinData;
-                
-                
-                const skinName = skinData.name || file.name.replace('.json', '');
-                this.showEditorScreen(skinName);
-            } catch (error) {
-                console.error('Error parsing JSON file:', error);
-                alert('Error parsing JSON file. Please ensure the file is valid JSON.');
+            if (fileName.endsWith('.json')) {
+                // Handle JSON files directly
+                skinData = await this.readJsonFile(file);
+                skinName = skinData.name || file.name.replace('.json', '');
+            } else {
+                // Handle ZIP-based skin formats (.deltaskin, .gammaskin, .manicskin, .zip)
+                const result = await this.readSkinArchive(file);
+                skinData = result.skinData;
+                skinName = result.skinName;
             }
-        };
 
-        reader.readAsText(file);
-        
+            // Basic validation - check if it has the expected structure
+            if (!this.validateSkinData(skinData)) {
+                alert('Invalid skin file format. Please select a valid emulator skin file.');
+                return;
+            }
+
+            this.currentSkin = skinData;
+            
+            // If we extracted images, automatically set the first one as background
+            if (this.uploadedImages.size > 0) {
+                this.autoSetBackgroundImage();
+            }
+            
+            this.showEditorScreen(skinName);
+            
+        } catch (error) {
+            console.error('Error importing skin file:', error);
+            alert(`Error importing skin file: ${error.message}`);
+        }
+
         // Reset file input
         event.target.value = '';
+    }
+
+    readJsonFile(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const skinData = JSON.parse(e.target.result);
+                    resolve(skinData);
+                } catch (error) {
+                    reject(new Error('Invalid JSON format'));
+                }
+            };
+            reader.onerror = () => reject(new Error('Failed to read file'));
+            reader.readAsText(file);
+        });
+    }
+
+    async readSkinArchive(file) {
+        try {
+            // Load JSZip library (already included in HTML)
+            const zip = new JSZip();
+            const zipContents = await zip.loadAsync(file);
+            
+            // Look for JSON files in the archive
+            let skinJsonFile = null;
+            const possibleJsonNames = ['info.json', 'skin.json', 'config.json'];
+            
+            // First check for common skin JSON filenames
+            for (const jsonName of possibleJsonNames) {
+                if (zipContents.files[jsonName]) {
+                    skinJsonFile = zipContents.files[jsonName];
+                    break;
+                }
+            }
+            
+            // If not found, look for any .json file
+            if (!skinJsonFile) {
+                for (const fileName in zipContents.files) {
+                    if (fileName.toLowerCase().endsWith('.json') && !zipContents.files[fileName].dir) {
+                        skinJsonFile = zipContents.files[fileName];
+                        break;
+                    }
+                }
+            }
+            
+            if (!skinJsonFile) {
+                throw new Error('No JSON configuration file found in the skin archive');
+            }
+            
+            // Read the JSON content
+            const jsonContent = await skinJsonFile.async('text');
+            const skinData = JSON.parse(jsonContent);
+            
+            // Extract images and store them for later use
+            await this.extractSkinImages(zipContents);
+            
+            // Generate skin name from file or JSON
+            const skinName = skinData.name || file.name.replace(/\.(deltaskin|gammaskin|manicskin|zip)$/i, '');
+            
+            return { skinData, skinName };
+            
+        } catch (error) {
+            throw new Error(`Failed to read skin archive: ${error.message}`);
+        }
+    }
+
+    async extractSkinImages(zipContents) {
+        // Extract and store images for use in the editor
+        const imageExtensions = ['.png', '.jpg', '.jpeg', '.gif'];
+        
+        for (const fileName in zipContents.files) {
+            const file = zipContents.files[fileName];
+            if (file.dir) continue;
+            
+            const lowerFileName = fileName.toLowerCase();
+            if (imageExtensions.some(ext => lowerFileName.endsWith(ext))) {
+                try {
+                    const imageData = await file.async('base64');
+                    const mimeType = this.getMimeTypeFromExtension(lowerFileName);
+                    const dataUrl = `data:${mimeType};base64,${imageData}`;
+                    
+                    // Store the image data for potential use
+                    this.uploadedImages.set(fileName, dataUrl);
+                } catch (error) {
+                    console.warn(`Failed to extract image ${fileName}:`, error);
+                }
+            }
+        }
+    }
+
+    getMimeTypeFromExtension(fileName) {
+        if (fileName.endsWith('.png')) return 'image/png';
+        if (fileName.endsWith('.jpg') || fileName.endsWith('.jpeg')) return 'image/jpeg';
+        if (fileName.endsWith('.gif')) return 'image/gif';
+        return 'image/png'; // default
+    }
+
+    autoSetBackgroundImage() {
+        if (this.uploadedImages.size === 0) return;
+        
+        // Look for common background image names first
+        const commonBackgroundNames = [
+            'background.png',
+            'bg.png', 
+            'skin.png',
+            'portrait.png',
+            'landscape.png'
+        ];
+        
+        let selectedImage = null;
+        let selectedFileName = null;
+        
+        // First, try to find a common background image name
+        for (const [fileName, imageData] of this.uploadedImages) {
+            const lowerFileName = fileName.toLowerCase();
+            if (commonBackgroundNames.some(name => lowerFileName.includes(name))) {
+                selectedImage = imageData;
+                selectedFileName = fileName;
+                break;
+            }
+        }
+        
+        // If no common name found, use the first image
+        if (!selectedImage) {
+            const firstEntry = this.uploadedImages.entries().next().value;
+            selectedImage = firstEntry[1];
+            selectedFileName = firstEntry[0];
+        }
+        
+        // Load image to get dimensions, then set as background
+        const img = new Image();
+        img.onload = () => {
+            this.setBackgroundImage(selectedFileName, selectedImage, img.width, img.height);
+            console.log(`Automatically set background image: ${selectedFileName} (${img.width}×${img.height})`);
+        };
+        img.onerror = () => {
+            console.warn(`Failed to load background image: ${selectedFileName}`);
+        };
+        img.src = selectedImage;
     }
 
     validateSkinData(data) {

@@ -1117,7 +1117,6 @@ body {
 .game-screen-area.dragging {
     opacity: 0.7 !important;
     z-index: 1000 !important;
-    transform: rotate(1deg);
     box-shadow: 0 12px 35px rgba(0, 0, 0, 0.4);
     border-color: #4a9eff;
 }
@@ -1178,7 +1177,6 @@ body {
 .skin-button.dragging {
     opacity: 0.7 !important;
     z-index: 1000 !important;
-    transform: rotate(2deg);
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
 }
 
