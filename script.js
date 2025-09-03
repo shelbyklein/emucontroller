@@ -2659,7 +2659,6 @@ class VisualRenderer {
         // Style the game screen area
         screenElement.style.backgroundColor = '#f0f0f0';
         screenElement.style.border = '1px solid #333';
-        screenElement.style.borderRadius = '4px';
         screenElement.style.display = 'flex';
         screenElement.style.alignItems = 'center';
         screenElement.style.justifyContent = 'center';
