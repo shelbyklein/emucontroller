@@ -1803,6 +1803,58 @@ body {
     background: var(--warning);
 }
 
+/* Screen Control Buttons */
+.screen-controls {
+    position: absolute;
+    top: -40px;
+    right: 0;
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+    z-index: 15;
+}
+
+.game-screen-area:hover .screen-controls,
+.game-screen-area.selected .screen-controls {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.screen-control-btn {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: 4px;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--text-secondary);
+    font-size: 12px;
+}
+
+.screen-control-btn:hover {
+    background: var(--bg-tertiary);
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+}
+
+.screen-control-btn.active {
+    background: var(--accent-primary);
+    border-color: var(--accent-primary);
+    color: white;
+}
+
+.screen-control-btn svg {
+    width: 12px;
+    height: 12px;
+    fill: currentColor;
+}
+
 /* Console Selection Grid */
 .console-grid {
     display: grid;

@@ -2749,6 +2749,127 @@ class VisualRenderer {
         });
         
         element.appendChild(handlesContainer);
+        
+        // Add control buttons for screen elements only
+        if (element.dataset.type === 'screen') {
+            this.addScreenControls(element);
+        }
+    }
+    
+    addScreenControls(screenElement) {
+        const controlsContainer = document.createElement('div');
+        controlsContainer.className = 'screen-controls';
+        
+        // Lock aspect ratio button
+        const lockBtn = document.createElement('button');
+        lockBtn.className = 'screen-control-btn lock-btn';
+        lockBtn.title = 'Lock aspect ratio';
+        lockBtn.innerHTML = `
+            <svg viewBox="0 0 24 24">
+                <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM9 6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9V6z"/>
+            </svg>
+        `;
+        lockBtn.addEventListener('click', (e) => this.toggleAspectRatioLock(e, screenElement));
+        
+        // Center horizontally button
+        const centerBtn = document.createElement('button');
+        centerBtn.className = 'screen-control-btn center-btn';
+        centerBtn.title = 'Center horizontally';
+        centerBtn.innerHTML = `
+            <svg viewBox="0 0 24 24">
+                <path d="M11 2v20c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1z"/>
+                <path d="M18 9h-4V7c0-.55-.45-1-1-1s-1 .45-1 1v2H8c-.55 0-1 .45-1 1s.45 1 1 1h4v6c0 .55.45 1 1 1s1-.45 1-1v-6h4c.55 0 1-.45 1-1s-.45-1-1-1z"/>
+            </svg>
+        `;
+        centerBtn.addEventListener('click', (e) => this.centerScreenHorizontally(e, screenElement));
+        
+        controlsContainer.appendChild(lockBtn);
+        controlsContainer.appendChild(centerBtn);
+        
+        screenElement.appendChild(controlsContainer);
+    }
+    
+    toggleAspectRatioLock(e, screenElement) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const lockBtn = e.currentTarget;
+        const isLocked = lockBtn.classList.contains('active');
+        
+        if (isLocked) {
+            // Unlock aspect ratio
+            lockBtn.classList.remove('active');
+            lockBtn.title = 'Lock aspect ratio';
+            screenElement.dataset.aspectLocked = 'false';
+        } else {
+            // Lock aspect ratio
+            lockBtn.classList.add('active');
+            lockBtn.title = 'Unlock aspect ratio';
+            screenElement.dataset.aspectLocked = 'true';
+            
+            // Store current aspect ratio
+            const currentWidth = parseFloat(screenElement.style.width);
+            const currentHeight = parseFloat(screenElement.style.height);
+            screenElement.dataset.aspectRatio = (currentWidth / currentHeight).toString();
+        }
+        
+        this.showControlFeedback(`Aspect ratio ${isLocked ? 'unlocked' : 'locked'}`);
+    }
+    
+    centerScreenHorizontally(e, screenElement) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Get the container dimensions
+        const gameScreen = this.container.querySelector('#gameScreen');
+        if (!gameScreen) return;
+        
+        const containerWidth = gameScreen.offsetWidth;
+        const elementWidth = parseFloat(screenElement.style.width);
+        
+        // Calculate center position
+        const centerX = Math.round((containerWidth - elementWidth) / 2);
+        
+        // Update element position
+        screenElement.style.left = `${Math.max(0, centerX)}px`;
+        
+        // Update the data model
+        const screenIndex = parseInt(screenElement.dataset.screenIndex);
+        const currentY = parseFloat(screenElement.style.top);
+        const currentWidth = parseFloat(screenElement.style.width);
+        const currentHeight = parseFloat(screenElement.style.height);
+        
+        this.updateScreenSize(screenIndex, Math.max(0, centerX), currentY, currentWidth, currentHeight);
+        
+        this.showControlFeedback(`Screen centered horizontally`);
+    }
+    
+    showControlFeedback(message) {
+        // Create temporary feedback element
+        const feedback = document.createElement('div');
+        feedback.className = 'control-feedback';
+        feedback.textContent = message;
+        feedback.style.cssText = `
+            position: fixed;
+            top: 60px;
+            right: 20px;
+            background: var(--success);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 12px;
+            z-index: 10000;
+            animation: fadeInOut 2s ease-in-out forwards;
+        `;
+        
+        document.body.appendChild(feedback);
+        
+        // Remove after animation
+        setTimeout(() => {
+            if (feedback.parentNode) {
+                feedback.parentNode.removeChild(feedback);
+            }
+        }, 2000);
     }
     
     getButtonType(inputs) {
@@ -3015,48 +3136,95 @@ class VisualRenderer {
         let newWidth = this.resizeData.startWidth;
         let newHeight = this.resizeData.startHeight;
         
+        // Check if aspect ratio is locked for screen elements
+        const isAspectLocked = this.resizeData.elementType === 'screen' && 
+                              this.resizeData.element.dataset.aspectLocked === 'true';
+        const aspectRatio = isAspectLocked ? parseFloat(this.resizeData.element.dataset.aspectRatio) : null;
+        
         // Calculate new dimensions based on resize direction
         switch (this.resizeData.direction) {
             case 'se': // Southeast - resize width and height
                 newWidth = Math.max(20, this.resizeData.startWidth + deltaX);
-                newHeight = Math.max(20, this.resizeData.startHeight + deltaY);
+                if (isAspectLocked && aspectRatio) {
+                    newHeight = newWidth / aspectRatio;
+                } else {
+                    newHeight = Math.max(20, this.resizeData.startHeight + deltaY);
+                }
                 break;
                 
             case 'sw': // Southwest - resize width (left) and height
                 newWidth = Math.max(20, this.resizeData.startWidth - deltaX);
-                newHeight = Math.max(20, this.resizeData.startHeight + deltaY);
-                newX = this.resizeData.startX + deltaX;
+                if (isAspectLocked && aspectRatio) {
+                    newHeight = newWidth / aspectRatio;
+                    newX = this.resizeData.startX + (this.resizeData.startWidth - newWidth);
+                } else {
+                    newHeight = Math.max(20, this.resizeData.startHeight + deltaY);
+                    newX = this.resizeData.startX + deltaX;
+                }
                 break;
                 
             case 'ne': // Northeast - resize width and height (top)
                 newWidth = Math.max(20, this.resizeData.startWidth + deltaX);
-                newHeight = Math.max(20, this.resizeData.startHeight - deltaY);
-                newY = this.resizeData.startY + deltaY;
+                if (isAspectLocked && aspectRatio) {
+                    newHeight = newWidth / aspectRatio;
+                    newY = this.resizeData.startY + (this.resizeData.startHeight - newHeight);
+                } else {
+                    newHeight = Math.max(20, this.resizeData.startHeight - deltaY);
+                    newY = this.resizeData.startY + deltaY;
+                }
                 break;
                 
             case 'nw': // Northwest - resize width (left) and height (top)
                 newWidth = Math.max(20, this.resizeData.startWidth - deltaX);
-                newHeight = Math.max(20, this.resizeData.startHeight - deltaY);
-                newX = this.resizeData.startX + deltaX;
-                newY = this.resizeData.startY + deltaY;
+                if (isAspectLocked && aspectRatio) {
+                    newHeight = newWidth / aspectRatio;
+                    newX = this.resizeData.startX + (this.resizeData.startWidth - newWidth);
+                    newY = this.resizeData.startY + (this.resizeData.startHeight - newHeight);
+                } else {
+                    newHeight = Math.max(20, this.resizeData.startHeight - deltaY);
+                    newX = this.resizeData.startX + deltaX;
+                    newY = this.resizeData.startY + deltaY;
+                }
                 break;
                 
             case 'n': // North - resize height (top)
-                newHeight = Math.max(20, this.resizeData.startHeight - deltaY);
-                newY = this.resizeData.startY + deltaY;
+                if (isAspectLocked && aspectRatio) {
+                    newHeight = Math.max(20, this.resizeData.startHeight - deltaY);
+                    newWidth = newHeight * aspectRatio;
+                    newY = this.resizeData.startY + deltaY;
+                } else {
+                    newHeight = Math.max(20, this.resizeData.startHeight - deltaY);
+                    newY = this.resizeData.startY + deltaY;
+                }
                 break;
                 
             case 's': // South - resize height
-                newHeight = Math.max(20, this.resizeData.startHeight + deltaY);
+                if (isAspectLocked && aspectRatio) {
+                    newHeight = Math.max(20, this.resizeData.startHeight + deltaY);
+                    newWidth = newHeight * aspectRatio;
+                } else {
+                    newHeight = Math.max(20, this.resizeData.startHeight + deltaY);
+                }
                 break;
                 
             case 'e': // East - resize width
-                newWidth = Math.max(20, this.resizeData.startWidth + deltaX);
+                if (isAspectLocked && aspectRatio) {
+                    newWidth = Math.max(20, this.resizeData.startWidth + deltaX);
+                    newHeight = newWidth / aspectRatio;
+                } else {
+                    newWidth = Math.max(20, this.resizeData.startWidth + deltaX);
+                }
                 break;
                 
             case 'w': // West - resize width (left)
-                newWidth = Math.max(20, this.resizeData.startWidth - deltaX);
-                newX = this.resizeData.startX + deltaX;
+                if (isAspectLocked && aspectRatio) {
+                    newWidth = Math.max(20, this.resizeData.startWidth - deltaX);
+                    newHeight = newWidth / aspectRatio;
+                    newX = this.resizeData.startX + deltaX;
+                } else {
+                    newWidth = Math.max(20, this.resizeData.startWidth - deltaX);
+                    newX = this.resizeData.startX + deltaX;
+                }
                 break;
         }
         
