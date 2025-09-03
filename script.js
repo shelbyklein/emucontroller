@@ -107,12 +107,7 @@ class EmuController {
         saveJsonBtn.addEventListener('click', () => this.saveJsonChanges());
         cancelEditBtn.addEventListener('click', () => this.cancelJsonEdit());
         
-        // Button management events
-        const addButtonBtn = document.getElementById('addButtonBtn');
-        const toggleButtonPanel = document.getElementById('toggleButtonPanel');
-        
-        addButtonBtn.addEventListener('click', () => this.showAddButtonDialog());
-        toggleButtonPanel.addEventListener('click', () => this.toggleButtonPanel());
+        // Button management events - removed unnecessary buttons
         
         // Device size selector events
         const deviceSizeSelect = document.getElementById('deviceSizeSelect');
@@ -1821,27 +1816,7 @@ class EmuController {
         document.getElementById('outputFrameAspectRatio').textContent = aspectRatio;
     }
     
-    toggleButtonPanel() {
-        const buttonPanel = document.querySelector('.button-panel');
-        const toggleBtn = document.getElementById('toggleButtonPanel');
-        
-        buttonPanel.classList.toggle('collapsed');
-        
-        // Rotate toggle icon (left-pointing arrow when collapsed)
-        if (buttonPanel.classList.contains('collapsed')) {
-            toggleBtn.style.transform = 'rotate(180deg)';
-        } else {
-            toggleBtn.style.transform = '';
-        }
-    }
-    
-    showAddButtonDialog() {
-        // For now, just show available buttons - could be expanded to a modal
-        const buttonPanel = document.querySelector('.button-panel');
-        if (buttonPanel.classList.contains('collapsed')) {
-            this.toggleButtonPanel();
-        }
-    }
+    // Removed toggleButtonPanel() and showAddButtonDialog() methods as buttons were removed
     
     // Device Size Management
     async initializeDeviceSelector() {
