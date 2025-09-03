@@ -1806,8 +1806,8 @@ body {
 /* Screen Control Buttons */
 .screen-controls {
     position: absolute;
-    top: -40px;
-    right: 0;
+    top: 8px;
+    right: 8px;
     display: flex;
     gap: 4px;
     opacity: 0;
