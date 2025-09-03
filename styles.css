@@ -2057,3 +2057,16 @@ body {
         justify-content: flex-end;
     }
 }
+
+/* Performance optimization - disable transitions during dragging */
+.no-transition,
+.no-transition * {
+    transition: none !important;
+}
+
+.dragging .skin-button,
+.dragging .game-screen-area,
+.dragging .device-frame,
+.dragging .visual-canvas {
+    transition: none !important;
+}

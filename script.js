@@ -2570,16 +2570,8 @@ class VisualRenderer {
     }
     
     applyScaling() {
-        // Apply zoom separately from panning
-        const deviceFrame = document.getElementById('deviceFrame');
-        if (deviceFrame) {
-            // Keep existing pan transform and add zoom
-            const currentTransform = deviceFrame.style.transform || '';
-            const translateMatch = currentTransform.match(/translate\([^)]+\)/);
-            const translatePart = translateMatch ? translateMatch[0] : `translate(${this.panOffset.x}px, ${this.panOffset.y}px)`;
-            
-            deviceFrame.style.transform = `${translatePart} scale(${this.zoomLevel})`;
-        }
+        // Use the combined transform method to preserve both pan and zoom
+        this.applyPanTransform();
     }
     
     render() {
@@ -2953,8 +2945,8 @@ class VisualRenderer {
         const deviceFrame = document.getElementById('deviceFrame');
         if (!deviceFrame) return;
         
-        // Apply translate transform for panning
-        deviceFrame.style.transform = `translate(${this.panOffset.x}px, ${this.panOffset.y}px)`;
+        // Apply both translate and scale transforms to preserve zoom
+        deviceFrame.style.transform = `translate(${this.panOffset.x}px, ${this.panOffset.y}px) scale(${this.zoomLevel})`;
     }
     
     resetPan() {
@@ -3046,6 +3038,12 @@ class VisualRenderer {
         // Visual feedback
         button.classList.add('dragging');
         
+        // Disable transitions for better performance
+        const visualContainer = this.container.closest('.visual-container');
+        if (visualContainer) {
+            visualContainer.classList.add('dragging');
+        }
+        
         // Add document event listeners for drag
         document.addEventListener('mousemove', this.onMouseMove);
         document.addEventListener('mouseup', this.onMouseUp);
@@ -3101,6 +3099,12 @@ class VisualRenderer {
         // Reset visual feedback
         button.classList.remove('dragging');
         document.body.style.userSelect = '';
+        
+        // Re-enable transitions
+        const visualContainer = this.container.closest('.visual-container');
+        if (visualContainer) {
+            visualContainer.classList.remove('dragging');
+        }
         
         // Check if this was actually a drag
         const dragDuration = Date.now() - this.dragStartTime;
@@ -3202,6 +3206,12 @@ class VisualRenderer {
         
         // Visual feedback
         element.classList.add('resizing');
+        
+        // Disable transitions for better performance
+        const visualContainer = this.container.closest('.visual-container');
+        if (visualContainer) {
+            visualContainer.classList.add('dragging');
+        }
         
         // Add document event listeners
         document.addEventListener('mousemove', this.onResizeMouseMove);
@@ -3344,6 +3354,12 @@ class VisualRenderer {
         element.classList.remove('resizing');
         document.body.style.userSelect = '';
         
+        // Re-enable transitions
+        const visualContainer = this.container.closest('.visual-container');
+        if (visualContainer) {
+            visualContainer.classList.remove('dragging');
+        }
+        
         // Update the underlying data model
         const newX = Math.round(parseFloat(element.style.left));
         const newY = Math.round(parseFloat(element.style.top));
@@ -3472,6 +3488,12 @@ class VisualRenderer {
         // Visual feedback
         screen.classList.add('dragging');
         
+        // Disable transitions for better performance
+        const visualContainer = this.container.closest('.visual-container');
+        if (visualContainer) {
+            visualContainer.classList.add('dragging');
+        }
+        
         // Add document event listeners for drag
         document.addEventListener('mousemove', this.onScreenMouseMove);
         document.addEventListener('mouseup', this.onScreenMouseUp);
@@ -3527,6 +3549,12 @@ class VisualRenderer {
         // Reset visual feedback
         screen.classList.remove('dragging');
         document.body.style.userSelect = '';
+        
+        // Re-enable transitions
+        const visualContainer = this.container.closest('.visual-container');
+        if (visualContainer) {
+            visualContainer.classList.remove('dragging');
+        }
         
         // Check if this was actually a drag
         const dragDuration = Date.now() - this.screenDragStartTime;
