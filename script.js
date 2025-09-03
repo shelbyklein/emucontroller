@@ -2552,6 +2552,13 @@ class VisualRenderer {
         this.currentOrientation = 'portrait';
         this.zoomLevel = 1.0;
         this.buttons = [];
+        
+        // Canvas panning properties
+        this.panOffset = { x: 0, y: 0 };
+        this.isPanning = false;
+        this.panStartPos = { x: 0, y: 0 };
+        
+        this.initPanning();
     }
     
     setOrientation(orientation) {
@@ -2563,10 +2570,8 @@ class VisualRenderer {
     }
     
     applyScaling() {
-        const visualContainer = this.container.closest('.visual-container');
-        if (visualContainer) {
-            visualContainer.style.transform = `scale(${this.zoomLevel})`;
-        }
+        // Scaling is now handled in applyPanTransform to combine zoom and pan
+        this.applyPanTransform();
     }
     
     render() {
@@ -2574,6 +2579,7 @@ class VisualRenderer {
         this.renderScreens();
         this.renderButtons();
         this.applyScaling();
+        this.applyPanTransform();
     }
     
     setupContainer() {
@@ -2870,6 +2876,85 @@ class VisualRenderer {
                 feedback.parentNode.removeChild(feedback);
             }
         }, 2000);
+    }
+    
+    // Canvas panning methods
+    initPanning() {
+        const visualContainer = this.container.closest('.visual-container');
+        if (!visualContainer) return;
+        
+        // Add event listeners for panning
+        visualContainer.addEventListener('mousedown', (e) => this.onPanStart(e));
+        document.addEventListener('mousemove', (e) => this.onPanMove(e));
+        document.addEventListener('mouseup', (e) => this.onPanEnd(e));
+    }
+    
+    onPanStart(e) {
+        // Only start panning if clicking on empty space (not on buttons/screens/handles)
+        if (e.target.closest('.skin-button') || 
+            e.target.closest('.game-screen-area') || 
+            e.target.closest('.resize-handle') ||
+            e.target.closest('.screen-control-btn')) {
+            return;
+        }
+        
+        e.preventDefault();
+        this.isPanning = true;
+        this.panStartPos = { x: e.clientX, y: e.clientY };
+        
+        const visualContainer = this.container.closest('.visual-container');
+        if (visualContainer) {
+            visualContainer.classList.add('panning');
+        }
+        
+        // Prevent text selection during panning
+        document.body.style.userSelect = 'none';
+    }
+    
+    onPanMove(e) {
+        if (!this.isPanning) return;
+        
+        e.preventDefault();
+        
+        const deltaX = e.clientX - this.panStartPos.x;
+        const deltaY = e.clientY - this.panStartPos.y;
+        
+        this.panOffset.x += deltaX;
+        this.panOffset.y += deltaY;
+        
+        this.panStartPos = { x: e.clientX, y: e.clientY };
+        
+        this.applyPanTransform();
+    }
+    
+    onPanEnd(e) {
+        if (!this.isPanning) return;
+        
+        this.isPanning = false;
+        
+        const visualContainer = this.container.closest('.visual-container');
+        if (visualContainer) {
+            visualContainer.classList.remove('panning');
+        }
+        
+        // Restore text selection
+        document.body.style.userSelect = '';
+    }
+    
+    applyPanTransform() {
+        const deviceFrame = this.container.querySelector('#deviceFrame');
+        if (!deviceFrame) return;
+        
+        // Apply both zoom and pan transforms
+        const scaleTransform = `scale(${this.zoomLevel})`;
+        const translateTransform = `translate(${this.panOffset.x}px, ${this.panOffset.y}px)`;
+        
+        deviceFrame.style.transform = `${translateTransform} ${scaleTransform}`;
+    }
+    
+    resetPan() {
+        this.panOffset = { x: 0, y: 0 };
+        this.applyPanTransform();
     }
     
     getButtonType(inputs) {
