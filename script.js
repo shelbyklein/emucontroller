@@ -172,8 +172,6 @@ class EmuController {
         saveButtonEdit.addEventListener('click', () => this.saveButtonEdits());
         
         // Add screen button event
-        const addScreenBtn = document.getElementById('addScreenBtn');
-        addScreenBtn.addEventListener('click', () => this.addScreen());
         
         // Screen edit modal events
         const closeScreenEditModal = document.getElementById('closeScreenEditModal');
