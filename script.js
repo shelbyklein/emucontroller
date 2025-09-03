@@ -183,6 +183,17 @@ class EmuController {
         closeScreenEditModal.addEventListener('click', () => this.hideScreenEditModal());
         cancelScreenEdit.addEventListener('click', () => this.hideScreenEditModal());
         saveScreenEdit.addEventListener('click', () => this.saveScreenEdits());
+        
+        // Aspect ratio calculation events
+        const inputWidthField = document.getElementById('editInputWidth');
+        const inputHeightField = document.getElementById('editInputHeight');
+        const outputWidthField = document.getElementById('editOutputWidth');
+        const outputHeightField = document.getElementById('editOutputHeight');
+        
+        inputWidthField.addEventListener('input', () => this.updateInputFrameAspectRatio());
+        inputHeightField.addEventListener('input', () => this.updateInputFrameAspectRatio());
+        outputWidthField.addEventListener('input', () => this.updateOutputFrameAspectRatio());
+        outputHeightField.addEventListener('input', () => this.updateOutputFrameAspectRatio());
 
     }
 
@@ -1697,6 +1708,10 @@ class EmuController {
         document.getElementById('editOutputY').value = screen.outputFrame?.y || 0;
         document.getElementById('editOutputWidth').value = screen.outputFrame?.width || 200;
         document.getElementById('editOutputHeight').value = screen.outputFrame?.height || 150;
+        
+        // Update aspect ratios
+        this.updateInputFrameAspectRatio();
+        this.updateOutputFrameAspectRatio();
     }
     
     saveScreenEdits() {
@@ -1751,6 +1766,59 @@ class EmuController {
             // Hide modal
             this.hideScreenEditModal();
         }
+    }
+    
+    // Aspect ratio calculation methods
+    calculateAspectRatio(width, height) {
+        if (!width || !height || width <= 0 || height <= 0) {
+            return '-';
+        }
+        
+        // Find the greatest common divisor
+        const gcd = (a, b) => b === 0 ? a : gcd(b, a % b);
+        const divisor = gcd(width, height);
+        
+        const simplifiedWidth = width / divisor;
+        const simplifiedHeight = height / divisor;
+        
+        // Common aspect ratio names
+        const commonRatios = {
+            '4:3': [4, 3],
+            '3:2': [3, 2],
+            '16:9': [16, 9],
+            '16:10': [16, 10],
+            '5:4': [5, 4],
+            '1:1': [1, 1],
+            '3:4': [3, 4],
+            '2:3': [2, 3],
+            '9:16': [9, 16],
+            '10:16': [10, 16],
+            '4:5': [4, 5]
+        };
+        
+        // Check if it matches a common ratio
+        for (const [name, ratio] of Object.entries(commonRatios)) {
+            if (simplifiedWidth === ratio[0] && simplifiedHeight === ratio[1]) {
+                return name;
+            }
+        }
+        
+        // Return simplified ratio
+        return `${simplifiedWidth}:${simplifiedHeight}`;
+    }
+    
+    updateInputFrameAspectRatio() {
+        const width = parseInt(document.getElementById('editInputWidth').value) || 0;
+        const height = parseInt(document.getElementById('editInputHeight').value) || 0;
+        const aspectRatio = this.calculateAspectRatio(width, height);
+        document.getElementById('inputFrameAspectRatio').textContent = aspectRatio;
+    }
+    
+    updateOutputFrameAspectRatio() {
+        const width = parseInt(document.getElementById('editOutputWidth').value) || 0;
+        const height = parseInt(document.getElementById('editOutputHeight').value) || 0;
+        const aspectRatio = this.calculateAspectRatio(width, height);
+        document.getElementById('outputFrameAspectRatio').textContent = aspectRatio;
     }
     
     toggleButtonPanel() {
