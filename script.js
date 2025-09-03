@@ -2571,7 +2571,7 @@ class VisualRenderer {
     
     applyScaling() {
         // Apply zoom separately from panning
-        const deviceFrame = this.container.querySelector('#deviceFrame');
+        const deviceFrame = document.getElementById('deviceFrame');
         if (deviceFrame) {
             // Keep existing pan transform and add zoom
             const currentTransform = deviceFrame.style.transform || '';
@@ -2889,12 +2889,7 @@ class VisualRenderer {
     // Canvas panning methods
     initPanning() {
         const visualContainer = this.container.closest('.visual-container');
-        if (!visualContainer) {
-            console.log('No visual container found for panning');
-            return;
-        }
-        
-        console.log('Initializing panning on:', visualContainer);
+        if (!visualContainer) return;
         
         // Add event listeners for panning
         visualContainer.addEventListener('mousedown', (e) => this.onPanStart(e));
@@ -2903,18 +2898,14 @@ class VisualRenderer {
     }
     
     onPanStart(e) {
-        console.log('Pan start attempt', e.target, e.target.className);
-        
         // Only start panning if clicking on empty space (not on buttons/screens/handles)
         if (e.target.closest('.skin-button') || 
             e.target.closest('.game-screen-area') || 
             e.target.closest('.resize-handle') ||
             e.target.closest('.screen-control-btn')) {
-            console.log('Pan blocked - clicked on interactive element');
             return;
         }
         
-        console.log('Pan starting!');
         e.preventDefault();
         this.isPanning = true;
         this.panStartPos = { x: e.clientX, y: e.clientY };
@@ -2939,8 +2930,6 @@ class VisualRenderer {
         this.panOffset.x += deltaX;
         this.panOffset.y += deltaY;
         
-        console.log('Pan move:', deltaX, deltaY, 'New offset:', this.panOffset);
-        
         this.panStartPos = { x: e.clientX, y: e.clientY };
         
         this.applyPanTransform();
@@ -2961,17 +2950,11 @@ class VisualRenderer {
     }
     
     applyPanTransform() {
-        const deviceFrame = this.container.querySelector('#deviceFrame');
-        if (!deviceFrame) {
-            console.log('No deviceFrame found for pan transform');
-            return;
-        }
-        
-        const transform = `translate(${this.panOffset.x}px, ${this.panOffset.y}px)`;
-        console.log('Applying pan transform:', transform);
+        const deviceFrame = document.getElementById('deviceFrame');
+        if (!deviceFrame) return;
         
         // Apply translate transform for panning
-        deviceFrame.style.transform = transform;
+        deviceFrame.style.transform = `translate(${this.panOffset.x}px, ${this.panOffset.y}px)`;
     }
     
     resetPan() {
