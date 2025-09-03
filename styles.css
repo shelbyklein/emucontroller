@@ -1278,7 +1278,7 @@ body {
 
 /* JSON Panel */
 .json-panel {
-    height:500px;
+    height: 100%;
     background: var(--bg-secondary);
     display: flex;
     flex-direction: column;
