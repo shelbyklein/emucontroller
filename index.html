@@ -1,494 +1,984 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EmuController - Emulator Skin Editor</title>
-    <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-    <div class="container">
-        <div class="welcome-screen" id="welcomeScreen">
-            <div class="header">
-                <h1>EmuController</h1>
-                <p>Create and edit emulator skins for iOS</p>
-            </div>
-            
-            <div class="options">
-                <button class="option-btn new-skin-btn" id="newSkinBtn">
-                    <div class="option-icon">
-                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="12" cy="12" r="10"/>
-                            <line x1="12" y1="8" x2="12" y2="16"/>
-                            <line x1="8" y1="12" x2="16" y2="12"/>
-                        </svg>
-                    </div>
-                    <h3>Create New Skin</h3>
-                    <p>Start from scratch with a blank configuration</p>
-                </button>
-                
-                <button class="option-btn template-btn" id="templateBtn">
-                    <div class="option-icon">
-                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                            <rect x="7" y="7" width="3" height="9"/>
-                            <rect x="14" y="7" width="3" height="5"/>
-                        </svg>
-                    </div>
-                    <h3>Start from Template</h3>
-                    <p>Begin with a pre-configured skin template</p>
-                </button>
-                
-                <button class="option-btn import-btn" id="importBtn">
-                    <div class="option-icon">
-                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                            <polyline points="7,10 12,15 17,10"/>
-                            <line x1="12" y1="15" x2="12" y2="3"/>
-                        </svg>
-                    </div>
-                    <h3>Import Existing Skin</h3>
-                    <p>Load a skin file (.deltaskin, .gammaskin, .manicskin, .zip, or .json)</p>
-                </button>
-            </div>
-            
-            <input type="file" id="fileInput" accept=".json,.deltaskin,.gammaskin,.manicskin,.zip" style="display: none;">
-        </div>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>EmuController - Emulator Skin Editor</title>
+        <link rel="stylesheet" href="styles.css" />
+    </head>
+    <body>
+        <div class="container">
+            <div class="welcome-screen" id="welcomeScreen">
+                <div class="header">
+                    <h1>EmuController</h1>
+                    <p>Create and edit emulator skins for iOS</p>
+                </div>
 
-        <!-- Template Selection Modal -->
-        <div class="modal-overlay" id="templateModal" style="display: none;">
-            <div class="modal">
-                <div class="modal-header">
-                    <h3>Choose Template</h3>
-                    <button class="close-btn" id="closeTemplateModal">&times;</button>
-                </div>
-                
-                <div class="modal-body">
-                    <div class="template-grid" id="templateGrid">
-                        <!-- Template options will be populated by JavaScript -->
-                    </div>
-                </div>
-                
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" id="cancelTemplateModal">Cancel</button>
-                </div>
-            </div>
-        </div>
+                <div class="options">
+                    <button class="option-btn new-skin-btn" id="newSkinBtn">
+                        <div class="option-icon">
+                            <svg
+                                width="48"
+                                height="48"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                            >
+                                <circle cx="12" cy="12" r="10" />
+                                <line x1="12" y1="8" x2="12" y2="16" />
+                                <line x1="8" y1="12" x2="16" y2="12" />
+                            </svg>
+                        </div>
+                        <h3>Create New Skin</h3>
+                        <p>Start from scratch with a blank configuration</p>
+                    </button>
 
-        <!-- New Skin Modal -->
-        <div class="modal-overlay" id="newSkinModal" style="display: none;">
-            <div class="modal">
-                <div class="modal-header">
-                    <h3>Create New Skin</h3>
-                    <button class="close-btn" id="closeModal">&times;</button>
-                </div>
-                
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label for="skinName">Skin Name</label>
-                        <input type="text" id="skinName" placeholder="My Custom Skin" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="skinIdentifier">Identifier</label>
-                        <input type="text" id="skinIdentifier" placeholder="com.yourname.skin.identifier" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Console Type</label>
-                        <div class="console-grid" id="consoleGrid">
-                            <!-- Console options will be populated by JavaScript -->
+                    <button class="option-btn template-btn" id="templateBtn">
+                        <div class="option-icon">
+                            <svg
+                                width="48"
+                                height="48"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                            >
+                                <rect
+                                    x="3"
+                                    y="3"
+                                    width="18"
+                                    height="18"
+                                    rx="2"
+                                    ry="2"
+                                />
+                                <rect x="7" y="7" width="3" height="9" />
+                                <rect x="14" y="7" width="3" height="5" />
+                            </svg>
                         </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="iphoneModel">Target iPhone Model</label>
-                        <select id="iphoneModel" required>
-                            <option value="">Select iPhone Model</option>
-                            <!-- Options will be populated by JavaScript -->
-                        </select>
-                    </div>
-                </div>
-                
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" id="cancelModal">Cancel</button>
-                    <button class="btn btn-primary" id="createSkinBtn">Create Skin</button>
-                </div>
-            </div>
-        </div>
+                        <h3>Start from Template</h3>
+                        <p>Begin with a pre-configured skin template</p>
+                    </button>
 
-        <!-- Button Edit Modal -->
-        <div class="modal-overlay" id="buttonEditModal" style="display: none;">
-            <div class="modal">
-                <div class="modal-header">
-                    <h3>Edit Button</h3>
-                    <button class="close-btn" id="closeButtonEditModal">&times;</button>
+                    <button class="option-btn import-btn" id="importBtn">
+                        <div class="option-icon">
+                            <svg
+                                width="48"
+                                height="48"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                            >
+                                <path
+                                    d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+                                />
+                                <polyline points="7,10 12,15 17,10" />
+                                <line x1="12" y1="15" x2="12" y2="3" />
+                            </svg>
+                        </div>
+                        <h3>Import Existing Skin</h3>
+                        <p>
+                            Load a skin file (.deltaskin, .gammaskin,
+                            .manicskin, .zip, or .json)
+                        </p>
+                    </button>
                 </div>
-                
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label for="editButtonInputs">Input(s)</label>
-                        <input type="text" id="editButtonInputs" placeholder="e.g., a, b, menu" required>
-                        <small class="help-text">For multiple inputs, separate with commas (e.g., "up,down,left,right" for d-pad)</small>
-                    </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="editButtonX">X Position</label>
-                            <input type="number" id="editButtonX" min="0" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="editButtonY">Y Position</label>
-                            <input type="number" id="editButtonY" min="0" required>
-                        </div>
-                    </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="editButtonWidth">Width</label>
-                            <input type="number" id="editButtonWidth" min="1" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="editButtonHeight">Height</label>
-                            <input type="number" id="editButtonHeight" min="1" required>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Extended Edges</label>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="editExtendedTop">Top</label>
-                                <input type="number" id="editExtendedTop" min="0" value="0">
-                            </div>
-                            <div class="form-group">
-                                <label for="editExtendedRight">Right</label>
-                                <input type="number" id="editExtendedRight" min="0" value="0">
-                            </div>
-                            <div class="form-group">
-                                <label for="editExtendedBottom">Bottom</label>
-                                <input type="number" id="editExtendedBottom" min="0" value="0">
-                            </div>
-                            <div class="form-group">
-                                <label for="editExtendedLeft">Left</label>
-                                <input type="number" id="editExtendedLeft" min="0" value="0">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" id="cancelButtonEdit">Cancel</button>
-                    <button class="btn btn-primary" id="saveButtonEdit">Save Changes</button>
-                </div>
-            </div>
-        </div>
 
-        <!-- Screen Edit Modal -->
-        <div class="modal-overlay" id="screenEditModal" style="display: none;">
-            <div class="modal">
-                <div class="modal-header">
-                    <h3>Edit Screen</h3>
-                    <button class="close-btn" id="closeScreenEditModal">&times;</button>
-                </div>
-                
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label>Input Frame (Game Resolution)</label>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="editInputX">X Position</label>
-                                <input type="number" id="editInputX" min="0" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="editInputY">Y Position</label>
-                                <input type="number" id="editInputY" min="0" required>
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="editInputWidth">Width</label>
-                                <input type="number" id="editInputWidth" min="1" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="editInputHeight">Height</label>
-                                <input type="number" id="editInputHeight" min="1" required>
-                            </div>
-                        </div>
-                        <div class="aspect-ratio-display">
-                            <span class="aspect-ratio-label">Aspect Ratio:</span>
-                            <span id="inputFrameAspectRatio" class="aspect-ratio-value">-</span>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Output Frame (Display Position & Size)</label>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="editOutputX">X Position</label>
-                                <input type="number" id="editOutputX" min="0" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="editOutputY">Y Position</label>
-                                <input type="number" id="editOutputY" min="0" required>
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="editOutputWidth">Width</label>
-                                <input type="number" id="editOutputWidth" min="1" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="editOutputHeight">Height</label>
-                                <input type="number" id="editOutputHeight" min="1" required>
-                            </div>
-                        </div>
-                        <div class="aspect-ratio-display">
-                            <span class="aspect-ratio-label">Aspect Ratio:</span>
-                            <span id="outputFrameAspectRatio" class="aspect-ratio-value">-</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" id="cancelScreenEdit">Cancel</button>
-                    <button class="btn btn-primary" id="saveScreenEdit">Save Changes</button>
-                </div>
+                <input
+                    type="file"
+                    id="fileInput"
+                    accept=".json,.deltaskin,.gammaskin,.manicskin,.zip"
+                    style="display: none"
+                />
             </div>
-        </div>
-        
-        <div class="editor-screen" id="editorScreen" style="display: none;">
-            <div class="editor-header">
-                <button class="back-btn" id="backBtn">← Back to Home</button>
-                <h2 id="skinTitle">Untitled Skin</h2>
-                <div class="editor-actions">
-                    <div class="export-group">
-                        <select id="exportFormatSelect" class="export-format-select">
-                            <option value="deltaskin">Delta (.deltaskin)</option>
-                            <option value="gammaskin">Gamma (.gammaskin)</option>
-                            <option value="manicskin">Manic (.manicskin)</option>
-                            <option value="zip">ZIP (.zip)</option>
-                        </select>
-                        <button class="btn btn-secondary" id="exportBtn">Export Skin</button>
+
+            <!-- Template Selection Modal -->
+            <div class="modal-overlay" id="templateModal" style="display: none">
+                <div class="modal">
+                    <div class="modal-header">
+                        <h3>Choose Template</h3>
+                        <button class="close-btn" id="closeTemplateModal">
+                            &times;
+                        </button>
+                    </div>
+
+                    <div class="modal-body">
+                        <div class="template-grid" id="templateGrid">
+                            <!-- Template options will be populated by JavaScript -->
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button
+                            class="btn btn-secondary"
+                            id="cancelTemplateModal"
+                        >
+                            Cancel
+                        </button>
                     </div>
                 </div>
             </div>
-            
-            <div class="editor-layout">
-                <div class="button-panel">
-                    <div class="button-panel-header">
-                        <h3>Button Management</h3>
-                        <div class="button-panel-actions">
+
+            <!-- New Skin Modal -->
+            <div class="modal-overlay" id="newSkinModal" style="display: none">
+                <div class="modal">
+                    <div class="modal-header">
+                        <h3>Create New Skin</h3>
+                        <button class="close-btn" id="closeModal">
+                            &times;
+                        </button>
+                    </div>
+
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="skinName">Skin Name</label>
+                            <input
+                                type="text"
+                                id="skinName"
+                                placeholder="My Custom Skin"
+                                required
+                            />
+                        </div>
+
+                        <div class="form-group">
+                            <label for="skinIdentifier">Identifier</label>
+                            <input
+                                type="text"
+                                id="skinIdentifier"
+                                placeholder="com.yourname.skin.identifier"
+                                required
+                            />
+                        </div>
+
+                        <div class="form-group">
+                            <label>Console Type</label>
+                            <div class="console-grid" id="consoleGrid">
+                                <!-- Console options will be populated by JavaScript -->
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="iphoneModel">Target iPhone Model</label>
+                            <select id="iphoneModel" required>
+                                <option value="">Select iPhone Model</option>
+                                <!-- Options will be populated by JavaScript -->
+                            </select>
                         </div>
                     </div>
-                    <div class="button-panel-content" id="buttonPanelContent">
-                        <div class="available-buttons">
-                            <h4>Standard Buttons</h4>
-                            <div class="button-grid" id="availableButtonsGrid">
-                                <!-- Available buttons will be populated here -->
-                            </div>
-                        </div>
-                        
-                        <div class="custom-button-creator">
-                            <h4>Add Custom Button</h4>
-                            <div class="custom-input-container">
-                                <input type="text" id="customButtonInput" placeholder="Enter input name (e.g., 'x', 'y', 'custom')" class="custom-input">
-                                <button class="btn btn-secondary" id="addCustomButtonBtn">Add</button>
-                            </div>
-                        </div>
-                        
-                        <div class="current-buttons">
-                            <h4>Current Buttons</h4>
-                            <div class="current-buttons-list" id="currentButtonsList">
-                                <!-- Current buttons will be listed here -->
-                            </div>
-                        </div>
-                        
-                        <div class="current-screens">
-                            <h4>Current Screens</h4>
-                            <div class="current-screens-list" id="currentScreensList">
-                                <!-- Current screens will be listed here -->
-                            </div>
-                            <button class="btn btn-secondary btn-small" id="addScreenBtn">Add Screen</button>
-                        </div>
-                        
-                        <div class="menu-insets-editor">
-                            <h4>Menu Insets <span class="help-text">(Safe areas for menu overlay)</span></h4>
-                            
-                            <div class="insets-controls" id="insetsControls">
-                                <div class="inset-control" id="insetBottomControl">
-                                    <label for="insetBottom">Bottom</label>
-                                    <div class="slider-container">
-                                        <input type="range" id="insetBottom" min="0" max="100" value="0" class="inset-slider">
-                                        <span class="slider-value" id="insetBottomValue">0%</span>
-                                    </div>
-                                </div>
-                                <div class="inset-control" id="insetLeftControl">
-                                    <label for="insetLeft">Left</label>
-                                    <div class="slider-container">
-                                        <input type="range" id="insetLeft" min="0" max="100" value="0" class="inset-slider">
-                                        <span class="slider-value" id="insetLeftValue">0%</span>
-                                    </div>
-                                </div>
-                                <div class="inset-control" id="insetRightControl">
-                                    <label for="insetRight">Right</label>
-                                    <div class="slider-container">
-                                        <input type="range" id="insetRight" min="0" max="100" value="0" class="inset-slider">
-                                        <span class="slider-value" id="insetRightValue">0%</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="orientation-settings">
-                            <h4>Orientation Support</h4>
-                            
-                            <div class="orientation-controls">
-                                <div class="orientation-control">
-                                    <label class="checkbox-label">
-                                        <input type="checkbox" id="enablePortrait" checked>
-                                        <span class="checkmark"></span>
-                                        <span class="checkbox-text">Portrait</span>
-                                    </label>
-                                </div>
-                                <div class="orientation-control">
-                                    <label class="checkbox-label">
-                                        <input type="checkbox" id="enableLandscape" checked>
-                                        <span class="checkmark"></span>
-                                        <span class="checkbox-text">Landscape</span>
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="background-image-editor">
-                            <h4>Background Image</h4>
-                            
-                            <div class="background-upload">
-                                <input type="file" id="backgroundImageInput" accept=".png,.jpg,.jpeg" style="display: none;">
-                                <button class="btn btn-secondary" id="uploadBackgroundBtn">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-15a2 2 0 0 1 2-2h7"/>
-                                        <polyline points="16,2 21,2 21,7"/>
-                                        <line x1="21" y1="2" x2="11" y2="12"/>
-                                    </svg>
-                                    Upload Image
-                                </button>
-                                <button class="btn btn-outline" id="removeBackgroundBtn" style="display: none;">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <polyline points="3,6 5,6 21,6"/>
-                                        <path d="m19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,2h4a2,2 0 0,1 2,2v2"/>
-                                    </svg>
-                                    Remove
-                                </button>
-                            </div>
-                            
-                            <div class="background-info" id="backgroundInfo" style="display: none;">
-                                <div class="background-details">
-                                    <div class="background-filename" id="backgroundFilename"></div>
-                                    <div class="background-size" id="backgroundSize"></div>
-                                </div>
-                                <div class="background-opacity-control">
-                                    <label for="backgroundOpacity">Background Opacity</label>
-                                    <div class="slider-container">
-                                        <input type="range" id="backgroundOpacity" min="0" max="100" value="50" class="inset-slider">
-                                        <span class="slider-value" id="backgroundOpacityValue">50%</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" id="cancelModal">
+                            Cancel
+                        </button>
+                        <button class="btn btn-primary" id="createSkinBtn">
+                            Create Skin
+                        </button>
                     </div>
                 </div>
-                
-                <div class="visual-panel">
-                    <div class="visual-header">
-                        <div class="device-info">
-                            <div class="device-selector">
-                                <label for="deviceSizeSelect">iPhone Model:</label>
-                                <select id="deviceSizeSelect" class="device-select">
-                                    <option value="">Select iPhone Model</option>
-                                    <!-- Options will be populated by JavaScript -->
-                                </select>
+            </div>
+
+            <!-- Button Edit Modal -->
+            <div
+                class="modal-overlay"
+                id="buttonEditModal"
+                style="display: none"
+            >
+                <div class="modal">
+                    <div class="modal-header">
+                        <h3>Edit Button</h3>
+                        <button class="close-btn" id="closeButtonEditModal">
+                            &times;
+                        </button>
+                    </div>
+
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="editButtonInputs">Input(s)</label>
+                            <input
+                                type="text"
+                                id="editButtonInputs"
+                                placeholder="e.g., a, b, menu"
+                                required
+                            />
+                            <small class="help-text"
+                                >For multiple inputs, separate with commas
+                                (e.g., "up,down,left,right" for d-pad)</small
+                            >
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="editButtonX">X Position</label>
+                                <input
+                                    type="number"
+                                    id="editButtonX"
+                                    min="0"
+                                    required
+                                />
                             </div>
-                            <div class="screen-info">
-                                <span class="device-model" id="deviceModel">iPhone</span>
-                                <span class="screen-size" id="screenSize">0 × 0</span>
+                            <div class="form-group">
+                                <label for="editButtonY">Y Position</label>
+                                <input
+                                    type="number"
+                                    id="editButtonY"
+                                    min="0"
+                                    required
+                                />
                             </div>
                         </div>
-                        <div class="visual-controls">
-                            <div class="orientation-toggle">
-                                <button class="orientation-btn active" id="portraitBtn" data-orientation="portrait" title="Portrait">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <rect x="6" y="2" width="12" height="20" rx="2" ry="2"></rect>
-                                        <line x1="12" y1="18" x2="12.01" y2="18"></line>
-                                    </svg>
-                                </button>
-                                <button class="orientation-btn" id="landscapeBtn" data-orientation="landscape" title="Landscape">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <rect x="2" y="6" width="20" height="12" rx="2" ry="2"></rect>
-                                        <line x1="6" y1="12" x2="6.01" y2="12"></line>
-                                    </svg>
-                                </button>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="editButtonWidth">Width</label>
+                                <input
+                                    type="number"
+                                    id="editButtonWidth"
+                                    min="1"
+                                    required
+                                />
                             </div>
-                            <div class="zoom-controls">
-                                <button class="zoom-btn" id="zoomOutBtn" data-action="zoom-out" title="Zoom Out">−</button>
-                                <span class="zoom-level" id="zoomLevel">100%</span>
-                                <button class="zoom-btn" id="zoomInBtn" data-action="zoom-in" title="Zoom In">+</button>
-                                <button class="zoom-btn" id="resetZoomBtn" data-action="reset" title="Reset Zoom">⌂</button>
+                            <div class="form-group">
+                                <label for="editButtonHeight">Height</label>
+                                <input
+                                    type="number"
+                                    id="editButtonHeight"
+                                    min="1"
+                                    required
+                                />
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Extended Edges</label>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="editExtendedTop">Top</label>
+                                    <input
+                                        type="number"
+                                        id="editExtendedTop"
+                                        min="0"
+                                        value="0"
+                                    />
+                                </div>
+                                <div class="form-group">
+                                    <label for="editExtendedRight">Right</label>
+                                    <input
+                                        type="number"
+                                        id="editExtendedRight"
+                                        min="0"
+                                        value="0"
+                                    />
+                                </div>
+                                <div class="form-group">
+                                    <label for="editExtendedBottom"
+                                        >Bottom</label
+                                    >
+                                    <input
+                                        type="number"
+                                        id="editExtendedBottom"
+                                        min="0"
+                                        value="0"
+                                    />
+                                </div>
+                                <div class="form-group">
+                                    <label for="editExtendedLeft">Left</label>
+                                    <input
+                                        type="number"
+                                        id="editExtendedLeft"
+                                        min="0"
+                                        value="0"
+                                    />
+                                </div>
                             </div>
                         </div>
                     </div>
-                    
-                    <div class="visual-container">
-                        <div class="device-frame" id="deviceFrame">
-                            <div class="screen-area" id="screenArea">
-                                <div class="game-screen" id="gameScreen">
-                                    <span class="game-screen-label">Game Screen</span>
-                                    
-                                </div>
-                                <div class="button-layer" id="buttonLayer">
-                                    <!-- Dynamic buttons will be rendered here -->
-                                </div>
-                                <div class="menu-inset-line bottom-line" id="bottomInsetLine"></div>
-                                <div class="menu-inset-line left-line" id="leftInsetLine"></div>
-                                <div class="menu-inset-line right-line" id="rightInsetLine"></div>
-                            </div>
-                        </div>
+
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" id="cancelButtonEdit">
+                            Cancel
+                        </button>
+                        <button class="btn btn-primary" id="saveButtonEdit">
+                            Save Changes
+                        </button>
                     </div>
                 </div>
-                
-                <div class="json-panel">
-                    <div class="json-panel-header">
-                        <h3>JSON Configuration</h3>
-                        <div class="json-actions">
-                            <button class="btn-icon" id="editJsonBtn" title="Edit JSON">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                                </svg>
-                            </button>
-                            <button class="btn-icon" id="copyJsonBtn" title="Copy JSON">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                                </svg>
+            </div>
+
+            <!-- Screen Edit Modal -->
+            <div
+                class="modal-overlay"
+                id="screenEditModal"
+                style="display: none"
+            >
+                <div class="modal">
+                    <div class="modal-header">
+                        <h3>Edit Screen</h3>
+                        <button class="close-btn" id="closeScreenEditModal">
+                            &times;
+                        </button>
+                    </div>
+
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label>Input Frame (Game Resolution)</label>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="editInputX">X Position</label>
+                                    <input
+                                        type="number"
+                                        id="editInputX"
+                                        min="0"
+                                        required
+                                    />
+                                </div>
+                                <div class="form-group">
+                                    <label for="editInputY">Y Position</label>
+                                    <input
+                                        type="number"
+                                        id="editInputY"
+                                        min="0"
+                                        required
+                                    />
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="editInputWidth">Width</label>
+                                    <input
+                                        type="number"
+                                        id="editInputWidth"
+                                        min="1"
+                                        required
+                                    />
+                                </div>
+                                <div class="form-group">
+                                    <label for="editInputHeight">Height</label>
+                                    <input
+                                        type="number"
+                                        id="editInputHeight"
+                                        min="1"
+                                        required
+                                    />
+                                </div>
+                            </div>
+                            <div class="aspect-ratio-display">
+                                <span class="aspect-ratio-label"
+                                    >Aspect Ratio:</span
+                                >
+                                <span
+                                    id="inputFrameAspectRatio"
+                                    class="aspect-ratio-value"
+                                    >-</span
+                                >
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label
+                                >Output Frame (Display Position & Size)</label
+                            >
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="editOutputX">X Position</label>
+                                    <input
+                                        type="number"
+                                        id="editOutputX"
+                                        min="0"
+                                        required
+                                    />
+                                </div>
+                                <div class="form-group">
+                                    <label for="editOutputY">Y Position</label>
+                                    <input
+                                        type="number"
+                                        id="editOutputY"
+                                        min="0"
+                                        required
+                                    />
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="editOutputWidth">Width</label>
+                                    <input
+                                        type="number"
+                                        id="editOutputWidth"
+                                        min="1"
+                                        required
+                                    />
+                                </div>
+                                <div class="form-group">
+                                    <label for="editOutputHeight">Height</label>
+                                    <input
+                                        type="number"
+                                        id="editOutputHeight"
+                                        min="1"
+                                        required
+                                    />
+                                </div>
+                            </div>
+                            <div class="aspect-ratio-display">
+                                <span class="aspect-ratio-label"
+                                    >Aspect Ratio:</span
+                                >
+                                <span
+                                    id="outputFrameAspectRatio"
+                                    class="aspect-ratio-value"
+                                    >-</span
+                                >
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" id="cancelScreenEdit">
+                            Cancel
+                        </button>
+                        <button class="btn btn-primary" id="saveScreenEdit">
+                            Save Changes
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="editor-screen" id="editorScreen" style="display: none">
+                <div class="editor-header">
+                    <button class="back-btn" id="backBtn">
+                        ← Back to Home
+                    </button>
+                    <h2 id="skinTitle">Untitled Skin</h2>
+                    <div class="editor-actions">
+                        <div class="export-group">
+                            <select
+                                id="exportFormatSelect"
+                                class="export-format-select"
+                            >
+                                <option value="deltaskin">
+                                    Delta (.deltaskin)
+                                </option>
+                                <option value="gammaskin">
+                                    Gamma (.gammaskin)
+                                </option>
+                                <option value="manicskin">
+                                    Manic (.manicskin)
+                                </option>
+                                <option value="zip">ZIP (.zip)</option>
+                            </select>
+                            <button class="btn btn-secondary" id="exportBtn">
+                                Export Skin
                             </button>
                         </div>
                     </div>
-                    <div class="json-content">
-                        <pre id="jsonViewer" class="json-viewer"><code>{}</code></pre>
-                        <textarea id="jsonEditor" class="json-editor" style="display: none;"></textarea>
+                </div>
+
+                <div class="editor-layout">
+                    <div class="button-panel">
+                        <div class="button-panel-header">
+                            <h3>Button Management</h3>
+                            <!-- <div class="button-panel-actions">
+                        </div> -->
+                        </div>
+                        <div
+                            class="button-panel-content"
+                            id="buttonPanelContent"
+                        >
+                            <div class="available-buttons">
+                                <h4>Standard Buttons</h4>
+                                <div
+                                    class="button-grid"
+                                    id="availableButtonsGrid"
+                                >
+                                    <!-- Available buttons will be populated here -->
+                                </div>
+                            </div>
+
+                            <div class="custom-button-creator">
+                                <h4>Add Custom Button</h4>
+                                <div class="custom-input-container">
+                                    <input
+                                        type="text"
+                                        id="customButtonInput"
+                                        placeholder="Enter input name (e.g., 'x', 'y', 'custom')"
+                                        class="custom-input"
+                                    />
+                                    <button
+                                        class="btn btn-secondary"
+                                        id="addCustomButtonBtn"
+                                    >
+                                        Add
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="current-buttons">
+                                <h4>Current Buttons</h4>
+                                <div
+                                    class="current-buttons-list"
+                                    id="currentButtonsList"
+                                >
+                                    <!-- Current buttons will be listed here -->
+                                </div>
+                            </div>
+
+                            <div class="current-screens">
+                                <h4>Current Screens</h4>
+                                <div
+                                    class="current-screens-list"
+                                    id="currentScreensList"
+                                >
+                                    <!-- Current screens will be listed here -->
+                                </div>
+                                <button
+                                    class="btn btn-secondary btn-small"
+                                    id="addScreenBtn"
+                                >
+                                    Add Screen
+                                </button>
+                            </div>
+
+                            <div class="menu-insets-editor">
+                                <h4>
+                                    Menu Insets
+                                    <span class="help-text"
+                                        >(Safe areas for menu overlay)</span
+                                    >
+                                </h4>
+
+                                <div
+                                    class="insets-controls"
+                                    id="insetsControls"
+                                >
+                                    <div
+                                        class="inset-control"
+                                        id="insetBottomControl"
+                                    >
+                                        <label for="insetBottom">Bottom</label>
+                                        <div class="slider-container">
+                                            <input
+                                                type="range"
+                                                id="insetBottom"
+                                                min="0"
+                                                max="100"
+                                                value="0"
+                                                class="inset-slider"
+                                            />
+                                            <span
+                                                class="slider-value"
+                                                id="insetBottomValue"
+                                                >0%</span
+                                            >
+                                        </div>
+                                    </div>
+                                    <div
+                                        class="inset-control"
+                                        id="insetLeftControl"
+                                    >
+                                        <label for="insetLeft">Left</label>
+                                        <div class="slider-container">
+                                            <input
+                                                type="range"
+                                                id="insetLeft"
+                                                min="0"
+                                                max="100"
+                                                value="0"
+                                                class="inset-slider"
+                                            />
+                                            <span
+                                                class="slider-value"
+                                                id="insetLeftValue"
+                                                >0%</span
+                                            >
+                                        </div>
+                                    </div>
+                                    <div
+                                        class="inset-control"
+                                        id="insetRightControl"
+                                    >
+                                        <label for="insetRight">Right</label>
+                                        <div class="slider-container">
+                                            <input
+                                                type="range"
+                                                id="insetRight"
+                                                min="0"
+                                                max="100"
+                                                value="0"
+                                                class="inset-slider"
+                                            />
+                                            <span
+                                                class="slider-value"
+                                                id="insetRightValue"
+                                                >0%</span
+                                            >
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="orientation-settings">
+                                <h4>Orientation Support</h4>
+
+                                <div class="orientation-controls">
+                                    <div class="orientation-control">
+                                        <label class="checkbox-label">
+                                            <input
+                                                type="checkbox"
+                                                id="enablePortrait"
+                                                checked
+                                            />
+                                            <span class="checkmark"></span>
+                                            <span class="checkbox-text"
+                                                >Portrait</span
+                                            >
+                                        </label>
+                                    </div>
+                                    <div class="orientation-control">
+                                        <label class="checkbox-label">
+                                            <input
+                                                type="checkbox"
+                                                id="enableLandscape"
+                                                checked
+                                            />
+                                            <span class="checkmark"></span>
+                                            <span class="checkbox-text"
+                                                >Landscape</span
+                                            >
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="background-image-editor">
+                                <h4>Background Image</h4>
+
+                                <div class="background-upload">
+                                    <input
+                                        type="file"
+                                        id="backgroundImageInput"
+                                        accept=".png,.jpg,.jpeg"
+                                        style="display: none"
+                                    />
+                                    <button
+                                        class="btn btn-secondary"
+                                        id="uploadBackgroundBtn"
+                                    >
+                                        <svg
+                                            width="16"
+                                            height="16"
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            stroke-width="2"
+                                        >
+                                            <path
+                                                d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-15a2 2 0 0 1 2-2h7"
+                                            />
+                                            <polyline points="16,2 21,2 21,7" />
+                                            <line
+                                                x1="21"
+                                                y1="2"
+                                                x2="11"
+                                                y2="12"
+                                            />
+                                        </svg>
+                                        Upload Image
+                                    </button>
+                                    <button
+                                        class="btn btn-outline"
+                                        id="removeBackgroundBtn"
+                                        style="display: none"
+                                    >
+                                        <svg
+                                            width="16"
+                                            height="16"
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            stroke-width="2"
+                                        >
+                                            <polyline points="3,6 5,6 21,6" />
+                                            <path
+                                                d="m19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,2h4a2,2 0 0,1 2,2v2"
+                                            />
+                                        </svg>
+                                        Remove
+                                    </button>
+                                </div>
+
+                                <div
+                                    class="background-info"
+                                    id="backgroundInfo"
+                                    style="display: none"
+                                >
+                                    <div class="background-details">
+                                        <div
+                                            class="background-filename"
+                                            id="backgroundFilename"
+                                        ></div>
+                                        <div
+                                            class="background-size"
+                                            id="backgroundSize"
+                                        ></div>
+                                    </div>
+                                    <div class="background-opacity-control">
+                                        <label for="backgroundOpacity"
+                                            >Background Opacity</label
+                                        >
+                                        <div class="slider-container">
+                                            <input
+                                                type="range"
+                                                id="backgroundOpacity"
+                                                min="0"
+                                                max="100"
+                                                value="50"
+                                                class="inset-slider"
+                                            />
+                                            <span
+                                                class="slider-value"
+                                                id="backgroundOpacityValue"
+                                                >50%</span
+                                            >
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="json-edit-actions" id="jsonEditActions" style="display: none;">
-                        <button class="btn btn-secondary" id="cancelEditBtn">Cancel</button>
-                        <button class="btn btn-primary" id="saveJsonBtn">Save Changes</button>
+
+                    <div class="visual-panel">
+                        <div class="visual-header">
+                            <div class="device-info">
+                                <div class="device-selector">
+                                    <label for="deviceSizeSelect"
+                                        >iPhone Model:</label
+                                    >
+                                    <select
+                                        id="deviceSizeSelect"
+                                        class="device-select"
+                                    >
+                                        <option value="">
+                                            Select iPhone Model
+                                        </option>
+                                        <!-- Options will be populated by JavaScript -->
+                                    </select>
+                                </div>
+                                <div class="screen-info">
+                                    <span class="device-model" id="deviceModel"
+                                        >iPhone</span
+                                    >
+                                    <span class="screen-size" id="screenSize"
+                                        >0 × 0</span
+                                    >
+                                </div>
+                            </div>
+                            <div class="visual-controls">
+                                <div class="orientation-toggle">
+                                    <button
+                                        class="orientation-btn active"
+                                        id="portraitBtn"
+                                        data-orientation="portrait"
+                                        title="Portrait"
+                                    >
+                                        <svg
+                                            width="16"
+                                            height="16"
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            stroke-width="2"
+                                        >
+                                            <rect
+                                                x="6"
+                                                y="2"
+                                                width="12"
+                                                height="20"
+                                                rx="2"
+                                                ry="2"
+                                            ></rect>
+                                            <line
+                                                x1="12"
+                                                y1="18"
+                                                x2="12.01"
+                                                y2="18"
+                                            ></line>
+                                        </svg>
+                                    </button>
+                                    <button
+                                        class="orientation-btn"
+                                        id="landscapeBtn"
+                                        data-orientation="landscape"
+                                        title="Landscape"
+                                    >
+                                        <svg
+                                            width="16"
+                                            height="16"
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            stroke-width="2"
+                                        >
+                                            <rect
+                                                x="2"
+                                                y="6"
+                                                width="20"
+                                                height="12"
+                                                rx="2"
+                                                ry="2"
+                                            ></rect>
+                                            <line
+                                                x1="6"
+                                                y1="12"
+                                                x2="6.01"
+                                                y2="12"
+                                            ></line>
+                                        </svg>
+                                    </button>
+                                </div>
+                                <div class="zoom-controls">
+                                    <button
+                                        class="zoom-btn"
+                                        id="zoomOutBtn"
+                                        data-action="zoom-out"
+                                        title="Zoom Out"
+                                    >
+                                        −
+                                    </button>
+                                    <span class="zoom-level" id="zoomLevel"
+                                        >100%</span
+                                    >
+                                    <button
+                                        class="zoom-btn"
+                                        id="zoomInBtn"
+                                        data-action="zoom-in"
+                                        title="Zoom In"
+                                    >
+                                        +
+                                    </button>
+                                    <button
+                                        class="zoom-btn"
+                                        id="resetZoomBtn"
+                                        data-action="reset"
+                                        title="Reset Zoom"
+                                    >
+                                        ⌂
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="visual-container">
+                            <div class="device-frame" id="deviceFrame">
+                                <div class="screen-area" id="screenArea">
+                                    <div class="game-screen" id="gameScreen">
+                                        <span class="game-screen-label"
+                                            >Game Screen</span
+                                        >
+                                    </div>
+                                    <div class="button-layer" id="buttonLayer">
+                                        <!-- Dynamic buttons will be rendered here -->
+                                    </div>
+                                    <div
+                                        class="menu-inset-line bottom-line"
+                                        id="bottomInsetLine"
+                                    ></div>
+                                    <div
+                                        class="menu-inset-line left-line"
+                                        id="leftInsetLine"
+                                    ></div>
+                                    <div
+                                        class="menu-inset-line right-line"
+                                        id="rightInsetLine"
+                                    ></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="json-panel">
+                        <div class="json-panel-header">
+                            <h3>JSON Configuration</h3>
+                            <div class="json-actions">
+                                <button
+                                    class="btn-icon"
+                                    id="editJsonBtn"
+                                    title="Edit JSON"
+                                >
+                                    <svg
+                                        width="16"
+                                        height="16"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                    >
+                                        <path
+                                            d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
+                                        ></path>
+                                        <path
+                                            d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
+                                        ></path>
+                                    </svg>
+                                </button>
+                                <button
+                                    class="btn-icon"
+                                    id="copyJsonBtn"
+                                    title="Copy JSON"
+                                >
+                                    <svg
+                                        width="16"
+                                        height="16"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                    >
+                                        <rect
+                                            x="9"
+                                            y="9"
+                                            width="13"
+                                            height="13"
+                                            rx="2"
+                                            ry="2"
+                                        ></rect>
+                                        <path
+                                            d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
+                                        ></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="json-content">
+                            <pre
+                                id="jsonViewer"
+                                class="json-viewer"
+                            ><code>{}</code></pre>
+                            <textarea
+                                id="jsonEditor"
+                                class="json-editor"
+                                style="display: none"
+                            ></textarea>
+                        </div>
+                        <div
+                            class="json-edit-actions"
+                            id="jsonEditActions"
+                            style="display: none"
+                        >
+                            <button
+                                class="btn btn-secondary"
+                                id="cancelEditBtn"
+                            >
+                                Cancel
+                            </button>
+                            <button class="btn btn-primary" id="saveJsonBtn">
+                                Save Changes
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-    
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="script.js"></script>
-</body>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+        <script src="script.js"></script>
+    </body>
 </html>
