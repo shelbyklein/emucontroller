@@ -2800,9 +2800,21 @@ class VisualRenderer {
         `;
         aspectBtn.addEventListener('click', (e) => this.resizeToConsoleAspectRatio(e, screenElement));
         
+        // Maximize button
+        const maximizeBtn = document.createElement('button');
+        maximizeBtn.className = 'screen-control-btn maximize-btn';
+        maximizeBtn.title = 'Maximize to container width';
+        maximizeBtn.innerHTML = `
+            <svg viewBox="0 0 24 24">
+                <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>
+            </svg>
+        `;
+        maximizeBtn.addEventListener('click', (e) => this.maximizeScreen(e, screenElement));
+        
         controlsContainer.appendChild(lockBtn);
         controlsContainer.appendChild(centerBtn);
         controlsContainer.appendChild(aspectBtn);
+        controlsContainer.appendChild(maximizeBtn);
         
         screenElement.appendChild(controlsContainer);
     }
@@ -2920,6 +2932,50 @@ class VisualRenderer {
             console.error('Error loading console aspect ratios:', error);
             this.showControlFeedback('Error loading aspect ratio data');
         }
+    }
+    
+    maximizeScreen(e, screenElement) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Get the container (deviceFrame) dimensions
+        const container = document.getElementById('deviceFrame');
+        if (!container) {
+            this.showControlFeedback('Container not found');
+            return;
+        }
+        
+        // Get container's available width (accounting for any padding/margins)
+        const containerRect = container.getBoundingClientRect();
+        const containerStyle = window.getComputedStyle(container);
+        const paddingLeft = parseFloat(containerStyle.paddingLeft) || 0;
+        const paddingRight = parseFloat(containerStyle.paddingRight) || 0;
+        const availableWidth = containerRect.width - paddingLeft - paddingRight;
+        
+        // Get current aspect ratio of the screen
+        const currentWidth = parseFloat(screenElement.style.width);
+        const currentHeight = parseFloat(screenElement.style.height);
+        const aspectRatio = currentWidth / currentHeight;
+        
+        // Calculate new dimensions using full width and maintaining aspect ratio
+        const newWidth = Math.min(availableWidth * 0.95, availableWidth); // Use 95% to leave small margin
+        const newHeight = newWidth / aspectRatio;
+        
+        // Update screen dimensions
+        screenElement.style.width = `${Math.round(newWidth)}px`;
+        screenElement.style.height = `${Math.round(newHeight)}px`;
+        
+        // Center the screen horizontally in the container
+        const centerX = (availableWidth - newWidth) / 2;
+        screenElement.style.left = `${Math.max(0, centerX)}px`;
+        
+        // Update the data model
+        const screenIndex = parseInt(screenElement.dataset.screenIndex);
+        const currentY = parseFloat(screenElement.style.top);
+        
+        this.updateScreenSize(screenIndex, Math.max(0, centerX), currentY, Math.round(newWidth), Math.round(newHeight));
+        
+        this.showControlFeedback(`Screen maximized to container width`);
     }
     
     showControlFeedback(message) {
