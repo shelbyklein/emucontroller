@@ -2570,8 +2570,16 @@ class VisualRenderer {
     }
     
     applyScaling() {
-        // Scaling is now handled in applyPanTransform to combine zoom and pan
-        this.applyPanTransform();
+        // Apply zoom separately from panning
+        const deviceFrame = this.container.querySelector('#deviceFrame');
+        if (deviceFrame) {
+            // Keep existing pan transform and add zoom
+            const currentTransform = deviceFrame.style.transform || '';
+            const translateMatch = currentTransform.match(/translate\([^)]+\)/);
+            const translatePart = translateMatch ? translateMatch[0] : `translate(${this.panOffset.x}px, ${this.panOffset.y}px)`;
+            
+            deviceFrame.style.transform = `${translatePart} scale(${this.zoomLevel})`;
+        }
     }
     
     render() {
@@ -2945,11 +2953,8 @@ class VisualRenderer {
         const deviceFrame = this.container.querySelector('#deviceFrame');
         if (!deviceFrame) return;
         
-        // Apply both zoom and pan transforms
-        const scaleTransform = `scale(${this.zoomLevel})`;
-        const translateTransform = `translate(${this.panOffset.x}px, ${this.panOffset.y}px)`;
-        
-        deviceFrame.style.transform = `${translateTransform} ${scaleTransform}`;
+        // Apply translate transform for panning
+        deviceFrame.style.transform = `translate(${this.panOffset.x}px, ${this.panOffset.y}px)`;
     }
     
     resetPan() {
