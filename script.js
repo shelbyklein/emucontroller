@@ -2951,22 +2951,21 @@ class VisualRenderer {
         const aspectRatio = currentWidth / currentHeight;
         
         // Calculate new dimensions using the full mapping width and maintaining aspect ratio
-        const newWidth = mappingSize.width * 0.95; // Use 95% to leave small margin
+        const newWidth = mappingSize.width;
         const newHeight = newWidth / aspectRatio;
         
         // Update screen dimensions
         screenElement.style.width = `${Math.round(newWidth)}px`;
         screenElement.style.height = `${Math.round(newHeight)}px`;
         
-        // Center the screen horizontally within the mapping area
-        const centerX = (mappingSize.width - newWidth) / 2;
-        screenElement.style.left = `${Math.max(0, centerX)}px`;
+        // Set x position to 0 (left edge)
+        screenElement.style.left = '0px';
         
         // Update the data model
         const screenIndex = parseInt(screenElement.dataset.screenIndex);
         const currentY = parseFloat(screenElement.style.top);
         
-        this.updateScreenSize(screenIndex, Math.max(0, centerX), currentY, Math.round(newWidth), Math.round(newHeight));
+        this.updateScreenSize(screenIndex, 0, currentY, Math.round(newWidth), Math.round(newHeight));
         
         this.showControlFeedback(`Screen maximized to mapping width (${mappingSize.width}px)`);
     }
