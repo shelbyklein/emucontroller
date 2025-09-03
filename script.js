@@ -2666,6 +2666,10 @@ class VisualRenderer {
         // Add screen identifier
         screenElement.textContent = `Screen ${index + 1}`;
         screenElement.title = `Game Screen ${index + 1} (${outputFrame.width}×${outputFrame.height}) - Drag to reposition`;
+        screenElement.dataset.type = 'screen';
+        
+        // Add resize handles
+        this.addResizeHandles(screenElement);
         
         // Make screen draggable with mouse events
         screenElement.addEventListener('mousedown', (e) => this.onScreenMouseDown(e, index));
@@ -2696,6 +2700,7 @@ class VisualRenderer {
         
         const button = document.createElement('div');
         button.className = `skin-button button-${this.getButtonType(item.inputs)}`;
+        button.style.position = 'absolute';
         button.style.left = `${item.frame.x}px`;
         button.style.top = `${item.frame.y}px`;
         button.style.width = `${item.frame.width}px`;
@@ -2707,10 +2712,14 @@ class VisualRenderer {
             button.textContent = buttonLabel;
         }
         button.dataset.index = index;
+        button.dataset.type = 'button';
         
         // Make button draggable with mouse events (no ghost image)
         button.draggable = false;
         button.style.cursor = 'move';
+        
+        // Add resize handles
+        this.addResizeHandles(button);
         
         // Add mouse-based drag event handlers
         button.addEventListener('mousedown', (e) => this.onMouseDown(e, index));
@@ -2719,6 +2728,27 @@ class VisualRenderer {
         button.addEventListener('click', (e) => this.onButtonClick(e, index));
         
         return button;
+    }
+    
+    addResizeHandles(element) {
+        const handlesContainer = document.createElement('div');
+        handlesContainer.className = 'resize-handles';
+        
+        // Create 8 resize handles (4 corners + 4 edges)
+        const handlePositions = ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'];
+        
+        handlePositions.forEach(position => {
+            const handle = document.createElement('div');
+            handle.className = `resize-handle ${position}`;
+            handle.dataset.direction = position;
+            
+            // Add mouse event handlers for resizing
+            handle.addEventListener('mousedown', (e) => this.onResizeHandleMouseDown(e, element, position));
+            
+            handlesContainer.appendChild(handle);
+        });
+        
+        element.appendChild(handlesContainer);
     }
     
     getButtonType(inputs) {
@@ -2914,6 +2944,224 @@ class VisualRenderer {
             top: 20px;
             right: 20px;
             background: var(--success);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 12px;
+            z-index: 10000;
+            animation: fadeInOut 2s ease-in-out forwards;
+        `;
+        
+        document.body.appendChild(feedback);
+        
+        // Remove after animation
+        setTimeout(() => {
+            if (feedback.parentNode) {
+                feedback.parentNode.removeChild(feedback);
+            }
+        }, 2000);
+    }
+    
+    // Resize handle event handlers
+    onResizeHandleMouseDown(e, element, direction) {
+        e.preventDefault();
+        e.stopPropagation(); // Prevent triggering element drag
+        
+        const elementType = element.dataset.type;
+        const elementIndex = elementType === 'button' ? parseInt(element.dataset.index) : 
+                           parseInt(element.dataset.screenIndex);
+        
+        // Get current element bounds
+        const rect = element.getBoundingClientRect();
+        const containerRect = element.offsetParent.getBoundingClientRect();
+        
+        // Store resize data
+        this.resizeData = {
+            element: element,
+            elementType: elementType,
+            index: elementIndex,
+            direction: direction,
+            startMouseX: e.clientX,
+            startMouseY: e.clientY,
+            startX: rect.left - containerRect.left,
+            startY: rect.top - containerRect.top,
+            startWidth: rect.width,
+            startHeight: rect.height
+        };
+        
+        // Visual feedback
+        element.classList.add('resizing');
+        
+        // Add document event listeners
+        document.addEventListener('mousemove', this.onResizeMouseMove);
+        document.addEventListener('mouseup', this.onResizeMouseUp);
+        
+        // Prevent text selection
+        document.body.style.userSelect = 'none';
+    }
+    
+    onResizeMouseMove = (e) => {
+        if (!this.resizeData) return;
+        
+        e.preventDefault();
+        
+        // Account for zoom level
+        const scale = this.zoomLevel || 1;
+        const deltaX = (e.clientX - this.resizeData.startMouseX) / scale;
+        const deltaY = (e.clientY - this.resizeData.startMouseY) / scale;
+        
+        let newX = this.resizeData.startX;
+        let newY = this.resizeData.startY;
+        let newWidth = this.resizeData.startWidth;
+        let newHeight = this.resizeData.startHeight;
+        
+        // Calculate new dimensions based on resize direction
+        switch (this.resizeData.direction) {
+            case 'se': // Southeast - resize width and height
+                newWidth = Math.max(20, this.resizeData.startWidth + deltaX);
+                newHeight = Math.max(20, this.resizeData.startHeight + deltaY);
+                break;
+                
+            case 'sw': // Southwest - resize width (left) and height
+                newWidth = Math.max(20, this.resizeData.startWidth - deltaX);
+                newHeight = Math.max(20, this.resizeData.startHeight + deltaY);
+                newX = this.resizeData.startX + deltaX;
+                break;
+                
+            case 'ne': // Northeast - resize width and height (top)
+                newWidth = Math.max(20, this.resizeData.startWidth + deltaX);
+                newHeight = Math.max(20, this.resizeData.startHeight - deltaY);
+                newY = this.resizeData.startY + deltaY;
+                break;
+                
+            case 'nw': // Northwest - resize width (left) and height (top)
+                newWidth = Math.max(20, this.resizeData.startWidth - deltaX);
+                newHeight = Math.max(20, this.resizeData.startHeight - deltaY);
+                newX = this.resizeData.startX + deltaX;
+                newY = this.resizeData.startY + deltaY;
+                break;
+                
+            case 'n': // North - resize height (top)
+                newHeight = Math.max(20, this.resizeData.startHeight - deltaY);
+                newY = this.resizeData.startY + deltaY;
+                break;
+                
+            case 's': // South - resize height
+                newHeight = Math.max(20, this.resizeData.startHeight + deltaY);
+                break;
+                
+            case 'e': // East - resize width
+                newWidth = Math.max(20, this.resizeData.startWidth + deltaX);
+                break;
+                
+            case 'w': // West - resize width (left)
+                newWidth = Math.max(20, this.resizeData.startWidth - deltaX);
+                newX = this.resizeData.startX + deltaX;
+                break;
+        }
+        
+        // Round values and clamp to reasonable bounds
+        newX = Math.max(0, Math.round(newX));
+        newY = Math.max(0, Math.round(newY));
+        newWidth = Math.max(20, Math.round(newWidth));
+        newHeight = Math.max(20, Math.round(newHeight));
+        
+        // Apply new dimensions to element
+        this.resizeData.element.style.left = `${newX}px`;
+        this.resizeData.element.style.top = `${newY}px`;
+        this.resizeData.element.style.width = `${newWidth}px`;
+        this.resizeData.element.style.height = `${newHeight}px`;
+    }
+    
+    onResizeMouseUp = (e) => {
+        if (!this.resizeData) return;
+        
+        const element = this.resizeData.element;
+        
+        // Remove document event listeners
+        document.removeEventListener('mousemove', this.onResizeMouseMove);
+        document.removeEventListener('mouseup', this.onResizeMouseUp);
+        
+        // Reset visual feedback
+        element.classList.remove('resizing');
+        document.body.style.userSelect = '';
+        
+        // Update the underlying data model
+        const newX = Math.round(parseFloat(element.style.left));
+        const newY = Math.round(parseFloat(element.style.top));
+        const newWidth = Math.round(parseFloat(element.style.width));
+        const newHeight = Math.round(parseFloat(element.style.height));
+        
+        if (this.resizeData.elementType === 'button') {
+            this.updateButtonSize(this.resizeData.index, newX, newY, newWidth, newHeight);
+        } else if (this.resizeData.elementType === 'screen') {
+            this.updateScreenSize(this.resizeData.index, newX, newY, newWidth, newHeight);
+        }
+        
+        // Reset resize state
+        this.resizeData = null;
+    }
+    
+    updateButtonSize(index, newX, newY, newWidth, newHeight) {
+        const items = this.getItemsForOrientation();
+        if (items[index] && items[index].frame) {
+            // Update the frame dimensions
+            items[index].frame.x = newX;
+            items[index].frame.y = newY;
+            items[index].frame.width = newWidth;
+            items[index].frame.height = newHeight;
+            
+            // Update the skin data
+            const orientationData = this.skinData.representations?.iphone?.edgeToEdge?.[this.currentOrientation];
+            if (orientationData && orientationData.items) {
+                orientationData.items[index] = items[index];
+            }
+            
+            // Refresh the JSON viewer
+            if (this.controller && this.controller.updateJsonViewer) {
+                this.controller.updateJsonViewer();
+            }
+            
+            // Show feedback
+            this.showResizeFeedback('Button', index, newWidth, newHeight);
+        }
+    }
+    
+    updateScreenSize(index, newX, newY, newWidth, newHeight) {
+        const screens = this.getScreensForOrientation();
+        if (screens[index] && screens[index].outputFrame) {
+            // Update the output frame dimensions
+            screens[index].outputFrame.x = newX;
+            screens[index].outputFrame.y = newY;
+            screens[index].outputFrame.width = newWidth;
+            screens[index].outputFrame.height = newHeight;
+            
+            // Update the skin data
+            const orientationData = this.skinData.representations?.iphone?.edgeToEdge?.[this.currentOrientation];
+            if (orientationData && orientationData.screens) {
+                orientationData.screens[index] = screens[index];
+            }
+            
+            // Refresh the JSON viewer
+            if (this.controller && this.controller.updateJsonViewer) {
+                this.controller.updateJsonViewer();
+            }
+            
+            // Show feedback
+            this.showResizeFeedback('Screen', index, newWidth, newHeight);
+        }
+    }
+    
+    showResizeFeedback(elementType, index, width, height) {
+        // Create temporary feedback element
+        const feedback = document.createElement('div');
+        feedback.className = 'resize-feedback';
+        feedback.textContent = `${elementType} ${index + 1} resized to ${width}×${height}`;
+        feedback.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--accent-primary);
             color: white;
             padding: 8px 16px;
             border-radius: 4px;

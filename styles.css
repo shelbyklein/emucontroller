@@ -1693,6 +1693,116 @@ body {
     font-weight: 600;
 }
 
+/* Resize Handles */
+.resize-handles {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.resize-handle {
+    position: absolute;
+    background: var(--accent-primary);
+    border: 1px solid var(--bg-primary);
+    border-radius: 2px;
+    pointer-events: all;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.skin-button:hover .resize-handle,
+.game-screen-area:hover .resize-handle,
+.skin-button.selected .resize-handle,
+.game-screen-area.selected .resize-handle {
+    opacity: 1;
+}
+
+/* Corner handles */
+.resize-handle.nw,
+.resize-handle.ne,
+.resize-handle.sw,
+.resize-handle.se {
+    width: 8px;
+    height: 8px;
+}
+
+.resize-handle.nw {
+    top: -4px;
+    left: -4px;
+    cursor: nw-resize;
+}
+
+.resize-handle.ne {
+    top: -4px;
+    right: -4px;
+    cursor: ne-resize;
+}
+
+.resize-handle.sw {
+    bottom: -4px;
+    left: -4px;
+    cursor: sw-resize;
+}
+
+.resize-handle.se {
+    bottom: -4px;
+    right: -4px;
+    cursor: se-resize;
+}
+
+/* Edge handles */
+.resize-handle.n,
+.resize-handle.s {
+    height: 4px;
+    width: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.resize-handle.e,
+.resize-handle.w {
+    width: 4px;
+    height: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.resize-handle.n {
+    top: -2px;
+    cursor: n-resize;
+}
+
+.resize-handle.s {
+    bottom: -2px;
+    cursor: s-resize;
+}
+
+.resize-handle.e {
+    right: -2px;
+    cursor: e-resize;
+}
+
+.resize-handle.w {
+    left: -2px;
+    cursor: w-resize;
+}
+
+/* Visual feedback during resize */
+.skin-button.resizing,
+.game-screen-area.resizing {
+    z-index: 1000;
+}
+
+.skin-button.resizing .resize-handle,
+.game-screen-area.resizing .resize-handle {
+    opacity: 1;
+    background: var(--warning);
+}
+
 /* Console Selection Grid */
 .console-grid {
     display: grid;
