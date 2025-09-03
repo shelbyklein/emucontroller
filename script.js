@@ -111,14 +111,16 @@ class EmuController {
         
         // Device size selector events
         const deviceSizeSelect = document.getElementById('deviceSizeSelect');
-        deviceSizeSelect.addEventListener('change', (e) => this.onDeviceSizeChange(e));
+        if (deviceSizeSelect) {
+            deviceSizeSelect.addEventListener('change', (e) => this.onDeviceSizeChange(e));
+        }
         
         // Visual control events
-        visualPortraitBtn.addEventListener('click', () => this.setOrientation('portrait'));
-        visualLandscapeBtn.addEventListener('click', () => this.setOrientation('landscape'));
-        visualZoomInBtn.addEventListener('click', () => this.zoomIn());
-        visualZoomOutBtn.addEventListener('click', () => this.zoomOut());
-        resetZoomBtn.addEventListener('click', () => this.resetZoom());
+        if (visualPortraitBtn) visualPortraitBtn.addEventListener('click', () => this.setOrientation('portrait'));
+        if (visualLandscapeBtn) visualLandscapeBtn.addEventListener('click', () => this.setOrientation('landscape'));
+        if (visualZoomInBtn) visualZoomInBtn.addEventListener('click', () => this.zoomIn());
+        if (visualZoomOutBtn) visualZoomOutBtn.addEventListener('click', () => this.zoomOut());
+        if (resetZoomBtn) resetZoomBtn.addEventListener('click', () => this.resetZoom());
         
         // Menu insets slider events
         const insetSliders = document.querySelectorAll('.inset-slider');
@@ -131,53 +133,65 @@ class EmuController {
         const removeBackgroundBtn = document.getElementById('removeBackgroundBtn');
         const backgroundImageInput = document.getElementById('backgroundImageInput');
         
-        uploadBackgroundBtn.addEventListener('click', () => this.triggerBackgroundUpload());
-        removeBackgroundBtn.addEventListener('click', () => this.removeBackgroundImage());
-        backgroundImageInput.addEventListener('change', (e) => this.handleBackgroundImageUpload(e));
+        if (uploadBackgroundBtn) uploadBackgroundBtn.addEventListener('click', () => this.triggerBackgroundUpload());
+        if (removeBackgroundBtn) removeBackgroundBtn.addEventListener('click', () => this.removeBackgroundImage());
+        if (backgroundImageInput) backgroundImageInput.addEventListener('change', (e) => this.handleBackgroundImageUpload(e));
         
         // Background opacity slider
         const backgroundOpacitySlider = document.getElementById('backgroundOpacity');
-        backgroundOpacitySlider.addEventListener('input', (e) => this.onBackgroundOpacityChange(e));
+        if (backgroundOpacitySlider) {
+            backgroundOpacitySlider.addEventListener('input', (e) => this.onBackgroundOpacityChange(e));
+        }
         
         // Orientation controls
         const enablePortrait = document.getElementById('enablePortrait');
         const enableLandscape = document.getElementById('enableLandscape');
         
-        enablePortrait.addEventListener('change', (e) => this.onOrientationToggle('portrait', e.target.checked));
-        enableLandscape.addEventListener('change', (e) => this.onOrientationToggle('landscape', e.target.checked));
+        if (enablePortrait) {
+            enablePortrait.addEventListener('change', (e) => this.onOrientationToggle('portrait', e.target.checked));
+        }
+        if (enableLandscape) {
+            enableLandscape.addEventListener('change', (e) => this.onOrientationToggle('landscape', e.target.checked));
+        }
         
         // Custom button creator
         const addCustomButtonBtn = document.getElementById('addCustomButtonBtn');
         const customButtonInput = document.getElementById('customButtonInput');
         
-        addCustomButtonBtn.addEventListener('click', () => this.addCustomButton());
-        customButtonInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                this.addCustomButton();
-            }
-        });
+        if (addCustomButtonBtn) {
+            addCustomButtonBtn.addEventListener('click', () => this.addCustomButton());
+        }
+        if (customButtonInput) {
+            customButtonInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    this.addCustomButton();
+                }
+            });
+        }
         
         // Button edit modal events
         const closeButtonEditModal = document.getElementById('closeButtonEditModal');
         const cancelButtonEdit = document.getElementById('cancelButtonEdit');
         const saveButtonEdit = document.getElementById('saveButtonEdit');
         
-        closeButtonEditModal.addEventListener('click', () => this.hideButtonEditModal());
-        cancelButtonEdit.addEventListener('click', () => this.hideButtonEditModal());
-        saveButtonEdit.addEventListener('click', () => this.saveButtonEdits());
+        if (closeButtonEditModal) closeButtonEditModal.addEventListener('click', () => this.hideButtonEditModal());
+        if (cancelButtonEdit) cancelButtonEdit.addEventListener('click', () => this.hideButtonEditModal());
+        if (saveButtonEdit) saveButtonEdit.addEventListener('click', () => this.saveButtonEdits());
         
         // Add screen button event
         const addScreenBtn = document.getElementById('addScreenBtn');
-        addScreenBtn.addEventListener('click', () => this.addScreen());
+        if (addScreenBtn) {
+            addScreenBtn.addEventListener('click', () => this.addScreen());
+        }
         
         // Screen edit modal events
         const closeScreenEditModal = document.getElementById('closeScreenEditModal');
         const cancelScreenEdit = document.getElementById('cancelScreenEdit');
         const saveScreenEdit = document.getElementById('saveScreenEdit');
         
-        closeScreenEditModal.addEventListener('click', () => this.hideScreenEditModal());
-        cancelScreenEdit.addEventListener('click', () => this.hideScreenEditModal());
-        saveScreenEdit.addEventListener('click', () => this.saveScreenEdits());
+        if (closeScreenEditModal) closeScreenEditModal.addEventListener('click', () => this.hideScreenEditModal());
+        if (cancelScreenEdit) cancelScreenEdit.addEventListener('click', () => this.hideScreenEditModal());
+        if (saveScreenEdit) saveScreenEdit.addEventListener('click', () => this.saveScreenEdits());
         
         // Aspect ratio calculation events
         const inputWidthField = document.getElementById('editInputWidth');
