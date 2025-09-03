@@ -2789,8 +2789,20 @@ class VisualRenderer {
         `;
         centerBtn.addEventListener('click', (e) => this.centerScreenHorizontally(e, screenElement));
         
+        // Console aspect ratio button
+        const aspectBtn = document.createElement('button');
+        aspectBtn.className = 'screen-control-btn aspect-btn';
+        aspectBtn.title = 'Resize to console aspect ratio';
+        aspectBtn.innerHTML = `
+            <svg viewBox="0 0 24 24">
+                <path d="M19 12h-2v3h-3v2h5v-5zM7 9h3V7H5v5h2V9zM21 3H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H3V5h18v14z"/>
+            </svg>
+        `;
+        aspectBtn.addEventListener('click', (e) => this.resizeToConsoleAspectRatio(e, screenElement));
+        
         controlsContainer.appendChild(lockBtn);
         controlsContainer.appendChild(centerBtn);
+        controlsContainer.appendChild(aspectBtn);
         
         screenElement.appendChild(controlsContainer);
     }
@@ -2848,6 +2860,66 @@ class VisualRenderer {
         this.updateScreenSize(screenIndex, Math.max(0, centerX), currentY, currentWidth, currentHeight);
         
         this.showControlFeedback(`Screen centered horizontally`);
+    }
+    
+    async resizeToConsoleAspectRatio(e, screenElement) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        try {
+            // Get the current console type
+            const gameTypeIdentifier = this.skinData?.gameTypeIdentifier;
+            if (!gameTypeIdentifier) {
+                this.showControlFeedback('No console type selected');
+                return;
+            }
+            
+            // Extract console key from identifier (e.g., "com.rileytestut.delta.game.gba" -> "gba")
+            const consoleKey = gameTypeIdentifier.split('.').pop();
+            
+            // Load aspect ratios if not already loaded
+            if (!this.consoleAspectRatios) {
+                const response = await fetch('assets/console-aspect-ratios.json');
+                this.consoleAspectRatios = await response.json();
+            }
+            
+            // Get the aspect ratio for this console
+            const aspectRatioString = this.consoleAspectRatios[consoleKey];
+            if (!aspectRatioString) {
+                this.showControlFeedback(`No aspect ratio defined for ${consoleKey.toUpperCase()}`);
+                return;
+            }
+            
+            // Parse aspect ratio (e.g., "4/3" -> 1.333...)
+            const [widthRatio, heightRatio] = aspectRatioString.split('/').map(Number);
+            const targetAspectRatio = widthRatio / heightRatio;
+            
+            // Get current dimensions
+            const currentWidth = parseFloat(screenElement.style.width);
+            const currentHeight = parseFloat(screenElement.style.height);
+            
+            // Calculate new dimensions maintaining the current area but with correct aspect ratio
+            const currentArea = currentWidth * currentHeight;
+            const newHeight = Math.sqrt(currentArea / targetAspectRatio);
+            const newWidth = newHeight * targetAspectRatio;
+            
+            // Update screen dimensions
+            screenElement.style.width = `${Math.round(newWidth)}px`;
+            screenElement.style.height = `${Math.round(newHeight)}px`;
+            
+            // Update the data model
+            const screenIndex = parseInt(screenElement.dataset.screenIndex);
+            const currentX = parseFloat(screenElement.style.left);
+            const currentY = parseFloat(screenElement.style.top);
+            
+            this.updateScreenSize(screenIndex, currentX, currentY, Math.round(newWidth), Math.round(newHeight));
+            
+            this.showControlFeedback(`Resized to ${consoleKey.toUpperCase()} aspect ratio (${aspectRatioString})`);
+            
+        } catch (error) {
+            console.error('Error loading console aspect ratios:', error);
+            this.showControlFeedback('Error loading aspect ratio data');
+        }
     }
     
     showControlFeedback(message) {
