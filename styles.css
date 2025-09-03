@@ -1146,7 +1146,7 @@ body {
 
 .skin-button {
     position: absolute;
-    border-radius: 8px;
+    border-radius: 0;
     border: 2px solid;
     display: flex;
     align-items: center;
