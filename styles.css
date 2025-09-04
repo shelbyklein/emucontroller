@@ -1033,7 +1033,7 @@ body {
     transition: transform 0.3s ease;
 }
 
-.device-frame::before {
+/* .device-frame::before {
     content: '';
     position: absolute;
     top: -6px;
@@ -1053,7 +1053,7 @@ body {
     width: 6px;
     height: 60px;
 }
-
+ */
 .screen-area {
     position: relative;
     width: 100%;
