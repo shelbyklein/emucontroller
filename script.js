@@ -591,6 +591,7 @@ class EmuController {
             this.initializeMenuInsetsSliders();
             this.initializeBackgroundImage();
             this.initializeOrientationControls();
+            this.setupSkinTitleEvents();
         });
         
         console.log('Current skin data:', this.currentSkin);
@@ -3798,6 +3799,27 @@ class VisualRenderer {
         if (skinTitleInput && this.currentSkin) {
             skinTitleInput.value = this.currentSkin.name || 'Untitled Skin';
         }
+    }
+
+    setupSkinTitleEvents() {
+        const skinTitleInput = document.getElementById('skinTitle');
+        if (!skinTitleInput) return;
+
+        // Update JSON when title changes
+        const updateTitle = () => {
+            if (this.currentSkin) {
+                this.currentSkin.name = skinTitleInput.value;
+                this.updateJsonViewer();
+            }
+        };
+
+        // Listen for changes
+        skinTitleInput.addEventListener('blur', updateTitle);
+        skinTitleInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                skinTitleInput.blur(); // Trigger the blur event
+            }
+        });
     }
 }
 
