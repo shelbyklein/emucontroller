@@ -3788,6 +3788,7 @@ class VisualRenderer {
         // Fallback to text for buttons without specific icons
         return buttonType.toUpperCase();
     }
+    
     updateSkinName(newName) {
         if (this.currentSkin) {
             this.currentSkin.name = newName;
