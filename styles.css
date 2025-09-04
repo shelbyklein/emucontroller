@@ -181,28 +181,6 @@ body {
     flex: 1;
 }
 
-.skin-title-input {
-    background: transparent;
-    border: none;
-    color: var(--text-primary);
-    font-size: 1.8rem;
-    font-weight: 600;
-    flex: 1;
-    padding: 8px 12px;
-    outline: none;
-    border-radius: 4px;
-    transition: background-color 0.2s ease;
-}
-
-.skin-title-input:hover {
-    background: var(--bg-secondary);
-}
-
-.skin-title-input:focus {
-    background: var(--bg-secondary);
-    border: 1px solid var(--accent-primary);
-}
-
 .editor-actions {
     display: flex;
     gap: 12px;
