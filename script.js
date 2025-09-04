@@ -204,13 +204,6 @@ class EmuController {
         outputWidthField.addEventListener('input', () => this.updateOutputFrameAspectRatio());
         outputHeightField.addEventListener('input', () => this.updateOutputFrameAspectRatio());
 
-        // Skin title input
-        const skinTitleInput = document.getElementById('skinTitle');
-        if (skinTitleInput) {
-            skinTitleInput.addEventListener('input', (e) => this.updateSkinName(e.target.value));
-            skinTitleInput.addEventListener('blur', () => this.updateJsonViewer());
-        }
-
     }
 
     populateModal() {
@@ -569,7 +562,8 @@ class EmuController {
         document.getElementById('editorScreen').style.display = 'flex';
         
         // Update skin title
-        this.updateSkinTitle();
+        const skinTitle = document.getElementById('skinTitle');
+        skinTitle.textContent = skinName;
         
         // Update page title
         document.title = `EmuController - ${skinName}`;
@@ -591,7 +585,6 @@ class EmuController {
             this.initializeMenuInsetsSliders();
             this.initializeBackgroundImage();
             this.initializeOrientationControls();
-            this.setupSkinTitleEvents();
         });
         
         console.log('Current skin data:', this.currentSkin);
@@ -3787,40 +3780,6 @@ class VisualRenderer {
         
         // Fallback to text for buttons without specific icons
         return buttonType.toUpperCase();
-    }
-    
-    updateSkinName(newName) {
-        if (this.currentSkin) {
-            this.currentSkin.name = newName;
-        }
-    }
-
-    updateSkinTitle() {
-        const skinTitleInput = document.getElementById('skinTitle');
-        if (skinTitleInput && this.currentSkin) {
-            skinTitleInput.value = this.currentSkin.name || 'Untitled Skin';
-        }
-    }
-
-    setupSkinTitleEvents() {
-        const skinTitleInput = document.getElementById('skinTitle');
-        if (!skinTitleInput) return;
-
-        // Update JSON when title changes
-        const updateTitle = () => {
-            if (this.currentSkin) {
-                this.currentSkin.name = skinTitleInput.value;
-                this.updateJsonViewer();
-            }
-        };
-
-        // Listen for changes
-        skinTitleInput.addEventListener('blur', updateTitle);
-        skinTitleInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                skinTitleInput.blur(); // Trigger the blur event
-            }
-        });
     }
 }
 
