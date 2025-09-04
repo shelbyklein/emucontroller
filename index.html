@@ -3,11 +3,14 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+        <meta
+            http-equiv="Cache-Control"
+            content="no-cache, no-store, must-revalidate"
+        />
         <meta http-equiv="Pragma" content="no-cache" />
         <meta http-equiv="Expires" content="0" />
         <title>EmuController - Emulator Skin Editor</title>
-        <link rel="stylesheet" href="styles.css?v=1.5" />
+        <link rel="stylesheet" href="styles.css" />
     </head>
     <body>
         <div class="container">
@@ -450,7 +453,13 @@
                     <button class="back-btn" id="backBtn">
                         ← Back to Home
                     </button>
-                    <input type="text" id="skinTitle" class="skin-title-input" value="Untitled Skin" placeholder="Enter skin name">
+                    <input
+                        type="text"
+                        id="skinTitle"
+                        class="skin-title-input"
+                        value="Untitled Skin"
+                        placeholder="Enter skin name"
+                    />
                     <div class="editor-actions">
                         <div class="export-group">
                             <select
@@ -616,7 +625,6 @@
                                     </div>
                                 </div>
                             </div>
-
                         </div>
                     </div>
 
@@ -829,12 +837,7 @@
                                             d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-15a2 2 0 0 1 2-2h7"
                                         />
                                         <polyline points="16,2 21,2 21,7" />
-                                        <line
-                                            x1="21"
-                                            y1="2"
-                                            x2="11"
-                                            y2="12"
-                                        />
+                                        <line x1="21" y1="2" x2="11" y2="12" />
                                     </svg>
                                     Upload Image
                                 </button>
@@ -897,7 +900,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="json-panel-header">
                             <h3>JSON Configuration</h3>
                             <div class="json-actions">
@@ -982,6 +985,6 @@
         </div>
 
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-        <script src="script.js"></script>
+        <script src="script.js?v=1.5"></script>
     </body>
 </html>
