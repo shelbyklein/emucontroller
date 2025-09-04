@@ -2066,3 +2066,33 @@ body {
 .dragging .visual-canvas {
     transition: none !important;
 }
+
+/* Hide scrollbars while maintaining functionality */
+/* For Webkit browsers (Chrome, Safari, Edge) */
+.json-content::-webkit-scrollbar,
+.settings-panel::-webkit-scrollbar,
+.visual-container::-webkit-scrollbar,
+.json-viewer::-webkit-scrollbar,
+.json-editor::-webkit-scrollbar {
+    display: none;
+}
+
+/* For Firefox */
+.json-content,
+.settings-panel,
+.visual-container,
+.json-viewer,
+.json-editor {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+/* Global body scrollbar hiding */
+body::-webkit-scrollbar {
+    display: none;
+}
+
+body {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
